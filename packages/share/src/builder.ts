@@ -1,10 +1,14 @@
 // One build of one repository at one commit (or commit prefix), in its own container: clone,
 // `feynman build`, and put the page in R2. The Durable Object's name is the job, so requests for
-// the same page while it builds wait for the same build instead of starting another.
+// the same page while it builds find that build running instead of starting another.
+//
+// A build takes minutes (it checks every spec), so nobody waits for it: `start` begins it and
+// answers at once, and the build goes on in the background (ctx.waitUntil). Visitors are shown
+// the ref's previous page, or a page that reloads until this one is in R2.
 import { Files, SandboxFileError } from "@cloudflare/sandbox";
 import { DurableObject, WorkerEntrypoint } from "cloudflare:workers";
-import { GATE_NAME } from "./gate.ts";
-import { pageKey, putFailure, putPage } from "./pages.ts";
+import { GATE_NAME, type ShareGate } from "./gate.ts";
+import { pageKey, putFailure, putLatest, putPage } from "./pages.ts";
 import { asCommit, type Commit } from "./refs.ts";
 import type { Repository } from "./repository.ts";
 import type { ShareEnv } from "./env.ts";
@@ -16,21 +20,31 @@ export interface BuildJob {
   readonly cloneUrl: string;
   /** A full commit, or a prefix of one that only a clone can resolve. */
   readonly target: string;
+  /** The branch, tag or HEAD asked for, whose latest page this becomes; none when a commit was. */
+  readonly ref?: string;
 }
 
-export type BuildResult =
-  | { ok: true; commit: Commit }
-  /** The repository or its specs: building it again gives the same answer. */
-  | { ok: false; status: 404 | 422; message: string; log: string }
-  | { ok: false; status: 500; message: string; log: string }
+/** What `start` did: a build is running (this one, or one already under way), or why none could start. */
+export type StartResult =
+  | { state: "building" }
+  /** The client started too many builds lately (SHARE_BUILDS). */
+  | { state: "limited" }
   /** The gate refused: another build is running, or today's builds are spent. */
-  | { ok: false; status: 503; message: string; log: string; retryAfterSeconds: number };
+  | { state: "busy" | "budget"; retryAfterSeconds: number };
+
+type BuildResult =
+  | { ok: true; commit: Commit }
+  /** The repository or its specs (404, 422), or the sandbox (500). */
+  | { ok: false; status: 404 | 422 | 500; message: string; log: string };
 
 const REPO = "/workspace/repo";
 const PAGE = "/workspace/out/index.html";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1_000;
+// A Durable Object stays in memory for a pending operation for at most 15 minutes from when it
+// starts (exec's output is one, ctx.waitUntil another), so a build must end well within that.
+// The gate's lease (gate.ts) outlasts a fetch and a build together.
 const FETCH_TIMEOUT_S = 120;
-const BUILD_TIMEOUT_S = 600;
+const BUILD_TIMEOUT_S = 780;
 const LOG_TAIL = 8_000;
 
 // HTTPS leaves the container only through ShareOutbound, which re-signs it with this CA. exec() does
@@ -68,7 +82,10 @@ export class ShareBuilder extends DurableObject<ShareEnv> {
   readonly #container: Container;
   readonly #files: Files;
   readonly #exports: ShareExports;
-  #pending: Promise<BuildResult> | null = null;
+  /** The build under way, if any. */
+  #pending: Promise<void> | null = null;
+  /** A start deciding whether it may build: callers meanwhile share its answer. */
+  #starting: Promise<StartResult> | null = null;
 
   constructor(ctx: DurableObjectState, env: ShareEnv) {
     super(ctx, env);
@@ -78,28 +95,41 @@ export class ShareBuilder extends DurableObject<ShareEnv> {
     this.#exports = shareExports(ctx);
   }
 
-  build(job: BuildJob): Promise<BuildResult> {
-    this.#pending ??= this.#build(job).finally(() => (this.#pending = null));
-    return this.#pending;
+  /**
+   * Begin building `job` unless a build of it is under way, and answer without waiting for it.
+   * A new build counts against `client`'s build limit; finding one under way does not, so a
+   * page that reloads while it waits costs nothing.
+   */
+  start(job: BuildJob, client: string): Promise<StartResult> {
+    if (this.#pending) return Promise.resolve({ state: "building" });
+    this.#starting ??= this.#begin(job, client).finally(() => (this.#starting = null));
+    return this.#starting;
   }
 
-  async #build(job: BuildJob): Promise<BuildResult> {
+  async #begin(job: BuildJob, client: string): Promise<StartResult> {
+    const { success } = await this.env.SHARE_BUILDS.limit({ key: client });
+    if (!success) return { state: "limited" };
     const name = `${job.repository.id}@${job.target}`;
     const gate = this.#exports.ShareGate.getByName(GATE_NAME);
     const decision = await gate.acquire(name);
     if (!decision.ok) {
       console.log({ event: "build.refused", repository: job.repository.id, target: job.target, reason: decision.reason });
-      const message = decision.reason === "busy" ? "Another build is running" : "Today's builds are spent";
-      return { ok: false, status: 503, message, log: "", retryAfterSeconds: decision.retryAfterSeconds };
+      return { state: decision.reason, retryAfterSeconds: decision.retryAfterSeconds };
     }
+    this.#pending = this.#build(job, name, gate).finally(() => (this.#pending = null));
+    this.ctx.waitUntil(this.#pending);
+    return { state: "building" };
+  }
+
+  async #build(job: BuildJob, name: string, gate: DurableObjectStub<ShareGate>): Promise<void> {
     try {
       const result = await this.#runBuild(job);
       // A repository that is not there, or whose specs do not build, says so again for a while
-      // without another container.
-      if (!result.ok && (result.status === 404 || result.status === 422)) {
-        await putFailure(this.env.SHARE_PAGES, job.repository, job.target, { status: result.status, message: result.message, log: result.log });
-      }
-      return result;
+      // without another container; a sandbox that failed, for a few minutes.
+      if (!result.ok) await putFailure(this.env.SHARE_PAGES, job.repository, job.target, { status: result.status, message: result.message, log: result.log });
+      else if (job.ref) await putLatest(this.env.SHARE_PAGES, job.repository, job.ref, { key: pageKey(job.repository, result.commit), commit: result.commit });
+    } catch (cause) {
+      console.log({ event: "build.error", repository: job.repository.id, target: job.target, error: cause instanceof Error ? (cause.stack ?? cause.message) : String(cause) });
     } finally {
       await gate.release(name);
     }
@@ -143,7 +173,9 @@ export class ShareBuilder extends DurableObject<ShareEnv> {
     if (this.#container.running) return;
     this.#container.start({
       image: this.#container.images.builder,
-      instance: "standard-1",
+      // Four vCPUs: on standard-1's half of one, a repository with many specs took longer than
+      // BUILD_TIMEOUT_S to check them all.
+      instance: "standard-4",
       // Only HTTP and HTTPS leave, through ShareOutbound, and only to the repository's host: specs
       // run during the build, and they are code from the internet.
       enableInternet: false,

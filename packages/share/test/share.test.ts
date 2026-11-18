@@ -121,7 +121,7 @@ describe("pageResponse", () => {
   test("a page runs sandboxed, in an origin that is not the site's", () => {
     // What R2 hands back for a stored page, as far as pageResponse reads it.
     const object = { body: "<!doctype html>", httpEtag: '"abc"', writeHttpMetadata: (headers: Headers) => headers.set("content-type", "text/html; charset=utf-8") } as unknown as R2ObjectBody;
-    const response = pageResponse(object, "a".repeat(40) as Commit, { immutable: true });
+    const response = pageResponse(object, "a".repeat(40) as Commit, "immutable");
     const policy = response.headers.get("content-security-policy") ?? "";
     expect(policy.split(" ")[0]).toBe("sandbox");
     expect(policy).toContain("allow-scripts");

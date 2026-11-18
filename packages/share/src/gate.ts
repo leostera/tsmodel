@@ -10,8 +10,12 @@ export const GATE_NAME = "global";
 export const CONCURRENT_BUILDS = 1;
 /** How many builds may start in a UTC day. */
 export const DAILY_BUILDS = 200;
-/** A lease older than this is a build that never released it (its container died): it lapses. */
-const LEASE_MS = 15 * 60 * 1_000;
+/**
+ * A lease older than this is a build that never released it (its container died, or its
+ * Durable Object was reset): it lapses. It outlasts the longest build, a fetch and a build
+ * (builder.ts), so no live build loses its slot.
+ */
+const LEASE_MS = 20 * 60 * 1_000;
 /** What a refused build is told to wait while another runs. */
 const BUSY_RETRY_S = 30;
 
