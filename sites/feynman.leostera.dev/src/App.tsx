@@ -1,5 +1,5 @@
 import { Button, LinkButton, Text } from "@cloudflare/kumo";
-import { ArrowRightIcon, CheckIcon, CircleHalfIcon, CopyIcon, RobotIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, CheckIcon, CircleHalfIcon, CopyIcon, GithubLogoIcon, RobotIcon } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import payments from "../snippets/payments.ts?highlight";
 import paymentsCheck from "../snippets/payments-check.txt?highlight";
@@ -167,6 +167,7 @@ export function App() {
           <LinkButton href="#agents" variant="primary" size="sm" icon={RobotIcon} className="px-4">
             Onboard your agent
           </LinkButton>
+          <LinkButton href="https://github.com/leostera/feynman" variant="ghost" size="sm" shape="square" icon={GithubLogoIcon} aria-label="Feynman on GitHub" title="Feynman on GitHub" />
           <ModeToggle />
         </nav>
       </header>
