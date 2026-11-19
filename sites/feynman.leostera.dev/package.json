@@ -1,0 +1,16 @@
+{
+  "name": "@tsmodel/feynman-redirect",
+  "private": true,
+  "type": "module",
+  "description": "feynman.leostera.dev, the site's name before the rename: a permanent redirect to tsmodel.leostera.dev.",
+  "scripts": {
+    "build": "cf build",
+    "deploy": "cf deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.7",
+    "cf": "^1.0.0-beta.24",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
