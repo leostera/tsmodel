@@ -2,7 +2,6 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { cloudflare } from "@cloudflare/vite-plugin";
-import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { highlightModule, QUERY } from "./scripts/highlight.ts";
@@ -55,5 +54,5 @@ function forAgents(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [highlight(), react(), tailwindcss(), prerender(), forAgents(), cloudflare()],
+  plugins: [highlight(), react(), prerender(), forAgents(), cloudflare()],
 });

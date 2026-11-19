@@ -50,7 +50,7 @@ Read the chapter for the task in front of you:
 tsmodel runs on [Bun](https://bun.sh) (1.3 or later). In the repository to model:
 
 ```sh
-bun add -d @tsmodel/tsmodel   # the DSL's types for your editor, and the CLI
+bun add -d @tsmodel/tsmodel    # the DSL's types for your editor, and the CLI
 bunx tsmodel list              # finds specs/*.ts
 ```
 

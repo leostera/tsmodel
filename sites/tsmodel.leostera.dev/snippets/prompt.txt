@@ -1,4 +1,1 @@
-Read https://tsmodel.leostera.dev/SKILL.md. Trace <the behavior> through this repository and
-write a tsmodel spec that models it. Check the spec, correct modeling mistakes, and report any
-counterexample that points to a possible bug in the code. Summarize the behavior covered, the
-scenarios, and every checker verdict.
+Read https://tsmodel.leostera.dev/SKILL.md. Trace <the behavior> through this repository and write a tsmodel spec that models it. Check the spec, correct modeling mistakes, and report any counterexample that points to a possible bug in the code. Summarize the behavior covered, the scenarios, and every checker verdict.

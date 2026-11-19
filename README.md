@@ -1,32 +1,68 @@
 # tsmodel
 
-**Understand how a system behaves, and what each change does to it.**
+**Find design bugs before your code does.**
 
-Code tells you what each part does. It rarely tells you what happens when the parts meet:
-when a reply is lost, a lease runs out mid-write, or two people press the same button. Those
-are the bugs that reach production, and the questions a newcomer cannot answer by reading.
+The bugs that reach production are rarely typos. They're orderings: a reply that's lost, a
+retry that lands twice, a lease that runs out mid-write, two people pressing the same button.
+Tests miss them because nobody thought to write that order down, and reading the code doesn't
+show them either.
 
-A tsmodel spec is one TypeScript file that writes the behaviour down as a program that runs:
-the actors and their state, the messages between them, the actions people take, and the
-rules that must always hold, each step anchored to the code it stands for. From that one
-file you get:
+With tsmodel you write down how a system behaves, once, in TypeScript: who the actors are, the
+messages between them, the failures they meet, and what must always hold. tsmodel then tries
+every order of events for you, and when something breaks, it shows you the shortest story of
+how:
 
-- **A simulator.** Add people and machines, press the buttons they would, watch every message
-  travel, lose one, and go back to any moment to try something else.
-- **A model checker that says how sure it is.** It tries every order of events within bounds,
-  with the faults the spec declares (lost messages, duplicates, crashes), on networks that
-  reorder or connections that keep order, then takes long random runs. Rules are safety
-  ("never two holders"), what must be possible ("a buyer can get a seat"), or liveness
-  ("every request is answered"), judged under fairness as in TLA+, and
-  a world where the system is stuck is reported too. A broken rule comes with the shortest
-  trace that breaks it, and for liveness the loop it repeats forever; a rule that held says
-  whether every state was explored.
-- **The flows of every scenario**, step by step, and how they change between commits.
-- **The code behind each step**, with its call tree, and a warning when that code changes
-  under the spec.
+```
+$ bunx tsmodel check
+specs/payments.ts
+Payments: explored 55 states (1 of each actor, faults=1) in 8ms
+  ✗ debitedOnce  The bank debits once per payment.
+    shortest counterexample, 4 event(s), needs no faults:
+       1  Client (Client)  pay
+          Pays, retrying until the bank answers.
+          paid: 0 → 1
+          pending: "" → "payment-1"
+          → Bank: debit {"id":"payment-1"}
+          ⏱ retry set
+       2  Bank (Bank)  debit  {"id":"payment-1"}  from Client
+          Debits the account.
+          debits: 0 → 1
+       3  Client (Client)  retry
+          No answer yet: pays again.
+          → Bank: debit {"id":"payment-1"}
+       4  Bank (Bank)  debit  {"id":"payment-1"}  from Client
+          Debits the account.
+          debits: 1 → 2
+          ✗ breaks debitedOnce
+```
 
 See it on a real system: [axo's remote access](https://tsmodel.leostera.dev/s/github.com/leostera/axo/),
 where people pair Macs with a one-time code and open terminals on them through a relay.
+
+## What you get
+
+- **Answers before the code exists.** Settle a design with your team, or your coding agent,
+  while changing it is still cheap. Bugs like a refresh that deleted the newer grant, or a
+  shard split that left listings waiting forever, were found this way before their code was
+  written.
+- **A playground for every design.** Add people and machines, press the buttons they would,
+  watch every message travel, lose one, crash a process, and go back to any moment to try
+  something else. Share it as one HTML file, or as a link to any public repository.
+- **A checker that says how sure it is.** Every rule gets one of four verdicts, and tsmodel
+  never rounds up: `✗` broken, with the trace; `✓` holds, with every state explored; `~` held
+  as far as the search got; `?` never tested. Its answers match TLA+'s TLC and the P checker
+  on the examples.
+- **Your real failures, and nothing else.** Declare the faults your system actually meets:
+  lost or duplicated messages, crashes that keep only what's on disk, calls that throw.
+- **Rules that earn their keep.** Name the rules a design relies on, and tsmodel checks the
+  design without each one. If nothing breaks, the rule does nothing, or the property is too
+  weak to see what it prevents.
+- **The model held up to production.** Give `tsmodel conform` an OpenTelemetry, Jaeger or
+  Zipkin trace, and it tells you whether the system did something the design says can't
+  happen, and on which span.
+- **Specs that keep up with the code.** Each step points at the code it stands for, and
+  tsmodel warns you when that code changes under the spec. `tsmodel diff` shows what a change
+  does to every flow.
 
 ## Start
 
@@ -34,146 +70,36 @@ tsmodel runs on [Bun](https://bun.sh) 1.3 or later.
 
 ```sh
 bun add -d @tsmodel/tsmodel
-bunx tsmodel check    # type-check, run the scenarios, explore, and judge every rule
-bunx tsmodel dev      # the simulator, reloading as the spec changes
-bunx tsmodel build    # minified standalone .tsmodel/index.html, plus .gz/.br for static hosting
+bunx tsmodel check    # try every order of events, and judge every rule
+bunx tsmodel dev      # the playground, reloading as the spec changes
+bunx tsmodel build    # the playground as one self-contained HTML file
 ```
 
-To learn to write specs, read *[Writing specs with tsmodel](book/README.md)*,
+To learn to write specs, read *[Writing specs with tsmodel](https://github.com/leostera/tsmodel/blob/main/book/README.md)*,
 a book that builds every spec step by step, from a first race condition to two-phase commit.
-
-`tsmodel check --brief` gives one line per property; `--only P` shows one property's
-counterexample, `--json` the whole result, and `--only P --as-scenario` the counterexample
-as a scenario you can paste into the spec. `tsmodel conform <spec> <log>` asks the other
-way: whether what the system logged, or a production trace (OpenTelemetry, Jaeger, Zipkin),
-is a run of the spec, and if not, the step where they part.
-
-Specs live in `specs/*.ts` and import `@tsmodel/tsmodel`:
-
-```ts
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineSpec, defineZone, lose } from "@tsmodel/tsmodel";
-
-// Faults are steps the spec declares: at most one on any path (`--set faults=2` for two).
-const faults = budget("faults", 1);
-
-const Acquire = defineMessage("Acquire");
-const Granted = defineMessage("Granted", { token: Number }, { tone: "reply" });
-
-const zone = defineZone({ name: "Cluster" });
-
-const Server = defineActor({
-  name: "Lock server",
-  zone,
-  singleton: true,
-  initialState: () => ({ token: 0 }),
-  transitions: {
-    acquire: {
-      on: Acquire,
-      description: "Grants the lock with a larger token each time.",
-      sends: [Granted],
-      run(state, _msg, ctx) {
-        state.token += 1;
-        ctx.reply(Granted, { token: state.token });
-      },
-    },
-  },
-});
-
-const Client = defineActor({
-  name: "Client",
-  zone,
-  symmetric: true,
-  initialState: () => ({ token: null as number | null }),
-  actions: {
-    acquire: {
-      with: [atMost(2)], // at most twice per client on any path
-      label: "Take the lock",
-      description: "Asks the server for the lock.",
-      sends: [Acquire],
-      run(_state, _inputs, ctx) {
-        ctx.send(ctx.the(Server), Acquire, {});
-      },
-    },
-  },
-  transitions: {
-    granted: { on: Granted, description: "Holds the lock.", run: (state, msg) => void (state.token = msg.token) },
-    // The network may lose the grant on its way.
-    grantedLost: lose(Granted, { spend: faults }),
-  },
-});
-
-const oneHolder = defineProperty("oneHolder", {
-  description: "Two clients never hold the same token.",
-  always: (w) => {
-    const tokens = w.all(Client).map((c) => c.state.token).filter((t) => t !== null);
-    return new Set(tokens).size === tokens.length;
-  },
-});
-
-export default defineSpec({
-  name: "Lease lock",
-  actors: [Server, Client],
-  properties: [oneHolder],
-});
-```
-
-Every part is a value: messages with the schema of their payload, checked when sent; actors
-whose steps say what they are `on`; properties and scenarios. `defineSpec` puts them
-together, and says when they do not fit: a message no one receives, an undeclared send, two
-fair steps on one message. Faults come from the faults library (`lose`, `duplicate`,
-`crash`, calls whose failure reaches the caller), built on the same steps as everything else.
-
-[`examples/`](packages/tsmodel/examples/) has 28 well-known systems (two-phase commit, Raft's vote, chain
-replication, CRDTs, dining philosophers and more), each with a real bug for the checker to
-find, the fix beside it, and most with TLA+ and P models that check the checker.
+The [examples](https://github.com/leostera/tsmodel/tree/main/packages/tsmodel/examples)
+are well-known systems (two-phase commit, Raft's vote, chain replication, CRDTs, dining
+philosophers and more), each with a real bug for the checker to find and the fix beside it.
 
 ## Let your agent write it
 
-Specs are meant to be written by coding agents and read by people. The package ships a skill,
-[`skills/tsmodel/SKILL.md`](packages/tsmodel/skills/tsmodel/SKILL.md), that teaches an agent to read a codebase,
-model one behaviour, check it, and report what it found. Pi loads it from the package; other
-agents can read it at https://tsmodel.leostera.dev/SKILL.md. A prompt to start from:
+Specs are meant to be written by coding agents and read by people. tsmodel ships a skill that
+teaches an agent to read a codebase, model one behaviour, check it, and report what it found.
+Pi loads it from the package, and any other agent can read it at
+https://tsmodel.leostera.dev/SKILL.md. A prompt to start from:
 
 > Read https://tsmodel.leostera.dev/SKILL.md, then write a tsmodel spec for how <the behaviour>
 > works in this repository. Put it in specs/, and run `bunx tsmodel check` until every rule
 > holds or you can show a real bug. Report what the spec covers and every verdict.
 
-## Verdicts you can trust
+## More
 
-Every rule gets one of four verdicts, and tsmodel never rounds up:
+- [tsmodel.leostera.dev](https://tsmodel.leostera.dev): what tsmodel finds, with playgrounds
+  you can open.
+- [Changelog](https://github.com/leostera/tsmodel/blob/main/packages/tsmodel/CHANGELOG.md):
+  what changed in each release, and how to migrate.
+- [Contributing](https://github.com/leostera/tsmodel/blob/main/CONTRIBUTING.md): how the
+  repository is laid out, and how to build, test and release it.
 
-- `✗` broken, with the trace, found by the search, a random run, or a scenario;
-- `✓` holds in every state within the bounds, all of them explored;
-- `~` held in the states explored, but a limit stopped the search first;
-- `?` never tested: nothing reached the situation the rule is about.
-
-The checker is tested against others. On the examples, it finds the same distinct states, the
-same verdicts and counterexamples of the same length as TLA+'s TLC, and the same verdicts as
-the P checker (`bun run oracles`).
-
-## This repository
-
-- [`packages/tsmodel`](packages/tsmodel): `@tsmodel/tsmodel` on npm, the library and CLI.
-  It holds its [README](packages/tsmodel/README.md), [CHANGELOG](packages/tsmodel/CHANGELOG.md),
-  examples, tests, and the agent skill. In `src/`: the DSL and engine (`spec`), the checker
-  (`check`), sources and call trees (`code`), the CLI (`cli`), the playground kit (`play`),
-  and the browser view (`view`); in `examples/oracles/`, TLA+ and P models of the examples.
-- [`packages/share`](packages/share): the explorer of any public git repository, built on
-  demand, that the site serves under `/s/`.
-- [`sites/tsmodel.leostera.dev`](sites/tsmodel.leostera.dev): the website.
-- [`book`](book/README.md): *Writing specs with tsmodel*, a book that teaches it step by step,
-  with every spec it builds in [`book/specs`](book/specs).
-- [`docs/rfds`](docs/rfds): design documents.
-- [`CHANGELOG.md`](CHANGELOG.md): what changed in the site, the explorer and the repository.
-
-From the root, `bun run test` tests both packages, and `bun run tsmodel check` checks the
-examples (`tsmodel.config.ts`).
-
-```sh
-bun install
-bun run test         # both packages, but not the oracles
-bun run typecheck
-bun run tsmodel dev  # the examples in the simulator
-```
-
-Status: early. The DSL may still change between minor versions.
+tsmodel is early: the DSL may still change between minor versions, and each change comes with
+migration notes.

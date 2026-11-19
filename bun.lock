@@ -69,7 +69,6 @@
     "sites/tsmodel.leostera.dev": {
       "name": "@tsmodel/site",
       "dependencies": {
-        "@cloudflare/kumo": "^2.15.0",
         "@phosphor-icons/react": "^2.1.10",
         "@tsmodel/share": "workspace:*",
         "@tsmodel/tsmodel": "workspace:*",
@@ -79,7 +78,6 @@
       },
       "devDependencies": {
         "@cloudflare/vite-plugin": "2.0.0-beta.v.7",
-        "@tailwindcss/vite": "^4.3.3",
         "@types/bun": "^1.4.4",
         "@types/node": "^24.0.0",
         "@types/react": "^19.3.0",
@@ -87,7 +85,6 @@
         "@vitejs/plugin-react": "^6.1.2",
         "cf": "^1.0.0-beta.24",
         "shiki": "^4.5.0",
-        "tailwindcss": "^4.3.3",
         "typescript": "^7.0.2",
         "vite": "^8.3.5",
       },

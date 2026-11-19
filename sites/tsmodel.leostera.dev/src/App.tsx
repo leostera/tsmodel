@@ -1,6 +1,6 @@
-import { Button, LinkButton, Text } from "@cloudflare/kumo";
-import { ArrowRightIcon, CheckIcon, CircleHalfIcon, CopyIcon, GithubLogoIcon, RobotIcon } from "@phosphor-icons/react";
-import { useState, type ReactNode } from "react";
+import { ArrowRightIcon, CheckIcon, CopyIcon, GithubLogoIcon } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import install from "../snippets/install.sh?highlight";
 import payments from "../snippets/payments.ts?highlight";
 import paymentsCheck from "../snippets/payments-check.txt?highlight";
 import faultsSnippet from "../snippets/faults.ts?highlight";
@@ -135,100 +135,114 @@ const FOUND = [
   "Text edited after it was approved for saving: it was stored without passing the content screen again.",
 ];
 
-const VERDICTS: { mark: string; name: string; text: string; tone: string }[] = [
-  { mark: "✗", name: "Broken", text: "A scenario, search, or random walk found a trace that breaks the property. For what must be possible, every state was explored and none gets there.", tone: "text-kumo-danger" },
-  { mark: "✓", name: "Holds", text: "The search explored every state the spec can reach and found no violation. Or, for what must be possible, it found the shortest way there.", tone: "text-kumo-success" },
-  { mark: "~", name: "Held so far", text: "A limit or a depth bound stopped the search first. It says how far it got (\u201cheld on every path of up to 9 events\u201d) and what to make smaller.", tone: "text-kumo-warning" },
-  { mark: "?", name: "Not tested", text: "The explored states never reached a case where this property could be judged.", tone: "text-kumo-subtle" },
+const VERDICTS: { sign: string; name: string; text: string; tone: string }[] = [
+  { sign: "✗", name: "Broken", text: "A scenario, search, or random walk found a trace that breaks the property. For what must be possible, every state was explored and none gets there.", tone: "broken" },
+  { sign: "✓", name: "Holds", text: "The search explored every state the spec can reach and found no violation. Or, for what must be possible, it found the shortest way there.", tone: "holds" },
+  { sign: "~", name: "Held so far", text: "A limit or a depth bound stopped the search first. It says how far it got (\u201cheld on every path of up to 9 events\u201d) and what to make smaller.", tone: "held" },
+  { sign: "?", name: "Not tested", text: "The explored states never reached a case where this property could be judged.", tone: "untested" },
 ];
+
+/** The payments counterexample `check` prints (snippets/payments-check.txt), step by step. */
+const TRACE: { actor: "Client" | "Bank"; step: string; from?: string; says: string; breaks?: string }[] = [
+  { actor: "Client", step: "pay", says: "Pays, and sends the bank a debit for payment-1." },
+  { actor: "Bank", step: "debit", from: "Client", says: "Debits the account." },
+  { actor: "Client", step: "retry", says: "No answer yet: pays again." },
+  { actor: "Bank", step: "debit", from: "Client", says: "Debits the account again.", breaks: "breaks debitedOnce" },
+];
+
+const GITHUB = "https://github.com/leostera/tsmodel";
+
+/** The wordmark's mark: two actors and the message between them. */
+function Mark() {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="10" cy="24" r="6" />
+      <circle cx="38" cy="24" r="6" />
+      <path d="M18 24h12m-5-5 5 5-5 5" />
+    </svg>
+  );
+}
 
 export function App() {
   return (
-    <div className="min-h-screen bg-kumo-canvas text-kumo-default">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
-        <a href="/" className="text-lg font-semibold text-kumo-default">
-          tsmodel
+    <div className="wrap">
+      <header className="top">
+        <a href="/" className="brand" aria-label="tsmodel">
+          <Mark />
+          <b>tsmodel</b>
         </a>
-        <nav className="flex items-center gap-1">
-          <span className="hidden items-center gap-1 md:flex">
-            <LinkButton href="#bugs" variant="ghost" size="sm">
-              What it finds
-            </LinkButton>
-            <LinkButton href="#model" variant="ghost" size="sm">
-              How it works
-            </LinkButton>
-            <LinkButton href="#production" variant="ghost" size="sm">
-              In production
-            </LinkButton>
-            <LinkButton href="#agents" variant="ghost" size="sm">
-              For agents
-            </LinkButton>
-          </span>
-          <LinkButton href="#agents" variant="primary" size="sm" icon={RobotIcon} className="px-4">
-            Onboard your agent
-          </LinkButton>
-          <LinkButton href="https://github.com/leostera/tsmodel" variant="ghost" size="sm" shape="square" icon={GithubLogoIcon} aria-label="tsmodel on GitHub" title="tsmodel on GitHub" />
-          <ModeToggle />
+        <nav aria-label="Site">
+          <a className="section-link" href="#bugs">
+            What it finds
+          </a>
+          <a className="section-link" href="#model">
+            How it works
+          </a>
+          <a className="section-link" href="#production">
+            In production
+          </a>
+          <a href="#agents">Onboard your agent</a>
+          <a className="icon" href={GITHUB} aria-label="tsmodel on GitHub" title="tsmodel on GitHub">
+            <GithubLogoIcon size={20} weight="bold" />
+          </a>
         </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6">
-        <section className="pt-12 pb-16 sm:pt-20">
-          <h1 className="max-w-4xl text-4xl font-semibold leading-[1.05] tracking-[-0.02em] text-balance sm:text-6xl">
-            Find design bugs before your code does.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg text-kumo-subtle">
-            Model how your system behaves once. Explore it in a playground, and check it for the orderings and failures that break it.
-          </p>
-          <div className="mt-8">
-            <LinkButton href="#agents" variant="primary" size="lg" icon={RobotIcon} className="px-5">
-              Onboard your agent
-            </LinkButton>
+      <main>
+        <section className="hero split middle">
+          <div>
+            <h1>Find design bugs before your code does.</h1>
+            <p className="lede">
+              Model how your system behaves once. Explore it in a playground, and check it for <mark>the orderings and failures</mark> that break it.
+            </p>
+            <div className="acts">
+              <a className="button" href="#agents">
+                Onboard your agent
+              </a>
+              <a className="more" href="#playground">
+                Open a playground <ArrowRightIcon size={16} weight="bold" />
+              </a>
+            </div>
           </div>
-          <Showcases />
+          <Trace />
         </section>
+
+        <Section id="playground" title="See the design move" lead="Every spec is a playground: step the actors by hand, lose a message, crash a process, and watch what each one knows. These three are real specs, open in the explorer.">
+          <Showcases />
+        </Section>
 
         <Section
           id="bugs"
           title="The bugs designs hide"
           lead="Not typos or types: orderings. A message lost, late, or delivered twice; a restart in the middle; two people at once. Each example is a spec you can open, on the shortest trace that breaks it."
         >
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="quarters bugs">
             {BUGS.map((bug) => (
-              <li key={bug.title} className="flex flex-col gap-3 rounded-lg bg-kumo-recessed p-4">
-                <p className="font-medium">{bug.title}</p>
-                <p className="flex-1 text-kumo-subtle text-pretty">{bug.text}</p>
-                <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <li key={bug.title}>
+                <h3>{bug.title}</h3>
+                <p>{bug.text}</p>
+                <p className="links">
                   {bug.examples.map((e) => (
-                    <a key={e.spec} href={exampleHref(e)} className="inline-flex items-center gap-1 font-medium text-kumo-brand hover:underline">
-                      {e.name} <ArrowRightIcon size={14} />
+                    <a key={e.spec} className="more" href={exampleHref(e)}>
+                      {e.name} <ArrowRightIcon size={13} weight="bold" />
                     </a>
                   ))}
                 </p>
               </li>
             ))}
           </ul>
-          <div className="mt-8 rounded-lg p-5 ring-1 ring-kumo-line">
-            <p className="font-medium">Found in real designs, before the code</p>
-            <ul className="mt-3 grid gap-2 text-kumo-subtle sm:grid-cols-2">
+          <div className="found split">
+            <h3>Found in real designs, before the code</h3>
+            <ul>
               {FOUND.map((f) => (
-                <li key={f} className="flex gap-2">
-                  <span className="font-mono text-kumo-danger">✗</span>
-                  <span className="text-pretty">{f}</span>
-                </li>
+                <li key={f}>{f}</li>
               ))}
             </ul>
           </div>
         </Section>
 
         <Section id="model" title="One model. Explore it and check it." lead="A spec is a TypeScript file: actors, messages, the faults they meet, and the properties that must hold. The same file runs the playground and the checker.">
-          <div className="grid items-start gap-4 lg:grid-cols-[1.25fr_1fr]">
-            <CodeBlock snippet={payments} label="specs/payments.ts" />
-            <div className="space-y-3 lg:sticky lg:top-6">
-              <CodeBlock snippet={paymentsCheck} label="bunx tsmodel check" />
-              <p className="text-kumo-subtle">The checker finds the shortest order of events in which a retry charges twice.</p>
-            </div>
-          </div>
+          <Pair left={<Code snippet={payments} label="specs/payments.ts" />} right={<Code snippet={paymentsCheck} label="bunx tsmodel check" />} caption="The checker finds the shortest order of events in which a retry charges twice." />
         </Section>
 
         <Section
@@ -236,22 +250,18 @@ export function App() {
           title="Say how your system fails"
           lead="Faults are steps the spec declares, where they happen: a message lost on the way, delivered twice, a process that crashes and keeps only what is on disk, a call that throws. A budget bounds how many happen on one path. Declare the failures your system really meets, and nothing else; a fault the library lacks is a step you write."
         >
-          <div className="grid items-start gap-4 lg:grid-cols-[1.15fr_1fr]">
-            <CodeBlock snippet={faultsSnippet} label="specs/retried-call.ts" />
-            <div className="space-y-3 lg:sticky lg:top-6">
-              <CodeBlock snippet={faultsCheck} label="bunx tsmodel check" />
-              <p className="text-kumo-subtle">Every counterexample says how many faults it needs. With none, the retry holds; one lost answer, and it charges twice.</p>
-            </div>
-          </div>
+          <Pair left={<Code snippet={faultsSnippet} label="specs/retried-call.ts" />} right={<Code snippet={faultsCheck} label="bunx tsmodel check" />} caption="Every counterexample says how many faults it needs. With none, the retry holds; one lost answer, and it charges twice." />
         </Section>
 
-        <Section id="checker" title="Know how far a check went" lead="Every property gets a verdict that says what the search covered.">
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {VERDICTS.map(({ mark, name, text, tone }) => (
-              <li key={name} className="flex gap-3 rounded-lg bg-kumo-recessed p-4">
-                <span className={`w-5 shrink-0 text-center font-mono text-lg font-semibold leading-6 ${tone}`}>{mark}</span>
-                <p className="text-kumo-subtle">
-                  <strong className="text-kumo-default">{name}</strong> {text}
+        <Section id="checker" title="Know how far a check went" lead="Every property gets a verdict that says what the search covered, so a pass never claims more than the checker saw.">
+          <ul className="verdicts">
+            {VERDICTS.map(({ sign, name, text, tone }) => (
+              <li key={name}>
+                <span className={`sign ${tone}`} aria-hidden="true">
+                  {sign}
+                </span>
+                <p>
+                  <b>{name}.</b> {text}
                 </p>
               </li>
             ))}
@@ -263,13 +273,7 @@ export function App() {
           title="Know which parts of the design matter"
           lead="Name the rules a design relies on, and say which properties need them. The checker also checks the design without each rule, and fails if nothing breaks: the rule does nothing, or the property is too weak to see what it prevents."
         >
-          <div className="grid items-start gap-4 lg:grid-cols-[1fr_1.15fr]">
-            <CodeBlock snippet={rules} label="specs/retried-call.ts" />
-            <div className="space-y-3 lg:sticky lg:top-6">
-              <CodeBlock snippet={rulesCheck} label="bunx tsmodel check" />
-              <p className="text-kumo-subtle">Without the idempotency key, a lost answer and a retry charge the customer twice.</p>
-            </div>
-          </div>
+          <Pair left={<Code snippet={rules} label="specs/retried-call.ts" />} right={<Code snippet={rulesCheck} label="bunx tsmodel check" />} caption="Without the idempotency key, a lost answer and a retry charge the customer twice." />
         </Section>
 
         <Section
@@ -277,134 +281,189 @@ export function App() {
           title="Hold the model up to production"
           lead="A check asks whether everything the spec allows is safe. A trace asks the other question: does the spec allow what the system did? Give tsmodel conform an OpenTelemetry, Jaeger or Zipkin trace, and it finds the run of the spec the trace is, judging every property along it, or the span where the system did something the spec says can't happen."
         >
-          <div className="grid gap-4">
-            <div className="max-w-2xl">
-              <CodeBlock snippet={conformSnippet} label="trace-map.ts" />
-            </div>
-            <div className="space-y-3">
-              <CodeBlock snippet={conformCheck} label="bunx tsmodel conform" />
-              <p className="text-kumo-subtle text-pretty">
-                The spec has the box office claim the seat in a second step, and the trace never shows one: the code holds it in one statement. Clocks across machines are not trusted; only each service's order, and what caused what.
-              </p>
-            </div>
-          </div>
+          <Pair
+            left={<Code snippet={conformSnippet} label="trace-map.ts" />}
+            right={<Code snippet={conformCheck} label="bunx tsmodel conform" />}
+            caption="The spec has the box office claim the seat in a second step, and the trace never shows one: the code holds it in one statement. Clocks across machines are not trusted; only each service's order, and what caused what."
+          />
         </Section>
 
-        <Section id="agents" title="Onboard your agent" lead="Give your agent the tsmodel skill and one behavior to model. It reads the code, writes the spec, runs the checks, and reports what it found.">
-          <div className="grid items-start gap-8 lg:grid-cols-[1fr_1.2fr]">
-            <div className="space-y-5">
-              <LinkButton href="/SKILL.md" variant="primary" icon={RobotIcon}>
+        <section id="agents" className="section closing split">
+          <div>
+            <h2>Onboard your agent</h2>
+            <p className="lead">Give your agent the tsmodel skill and one behavior to model. It reads the code, writes the spec, runs the checks, and reports what it found.</p>
+            <p className="caption">Pi loads the skill from the package. Other agents read it from this site; the prompt beside it is a good start.</p>
+            <div className="acts">
+              <a className="button" href="/SKILL.md">
                 Open the tsmodel skill
-              </LinkButton>
-              <p className="text-kumo-subtle">
-                Pi loads the skill from the package. Other agents can read it from this site; the prompt beside it is a good start.
-              </p>
-            </div>
-            <div className="lg:sticky lg:top-6">
-              <CodeBlock snippet={prompt} label="A prompt to start with" />
+              </a>
+              <a className="button quiet" href={GITHUB}>
+                <GithubLogoIcon size={18} weight="bold" /> Source on GitHub
+              </a>
             </div>
           </div>
-        </Section>
+          <div className="stack">
+            <Code snippet={prompt} label="A prompt to start with" prose />
+            <Code snippet={install} label="Or by hand" />
+          </div>
+        </section>
       </main>
+
+      <footer>
+        <span>tsmodel is open source, by Leandro Ostera.</span>
+        <nav aria-label="More">
+          <a href="/llms.txt">llms.txt</a>
+          <a href="/SKILL.md">SKILL.md</a>
+          <a href={`${GITHUB}/blob/main/packages/tsmodel/CHANGELOG.md`}>Changelog</a>
+          <a href={GITHUB}>GitHub</a>
+        </nav>
+      </footer>
     </div>
   );
 }
 
-/** The hero's playground: one large preview per moment, switched by tabs. */
+/** A section: its title in the left half, what it is about in the right, then its content. */
+function Section({ id, title, lead, children }: { id: string; title: string; lead: string; children: ReactNode }) {
+  return (
+    <section id={id} className="section">
+      <div className="split intro">
+        <h2>{title}</h2>
+        <p className="lead">{lead}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A spec and what the CLI says about it, one in each half; the output stays in view beside a long spec. */
+function Pair({ left, right, caption }: { left: ReactNode; right: ReactNode; caption: string }) {
+  return (
+    <div className="split">
+      {left}
+      <div className="sticky">
+        {right}
+        <p className="caption">{caption}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The payments counterexample, step by step: who did what, each actor's state, and the moment
+ * the property breaks. Rendered whole, so the page shows it without JavaScript; it replays while
+ * on screen, and stays still for reduced motion.
+ */
+function Trace() {
+  const [shown, setShown] = useState(TRACE.length);
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let visible = true;
+    let at = TRACE.length;
+    const observer = new IntersectionObserver(([entry]) => void (visible = entry!.isIntersecting));
+    observer.observe(ref.current!);
+    // Each step 1.4 s after the one before; the broken end stays 4.2 s; then from the start.
+    let wait = 3;
+    const timer = setInterval(() => {
+      if (!visible || document.hidden) return;
+      if (--wait > 0) return;
+      at = at >= TRACE.length ? 0 : at + 1;
+      wait = at === TRACE.length ? 3 : 1;
+      setShown(at);
+    }, 1400);
+    return () => (clearInterval(timer), observer.disconnect());
+  }, []);
+  const done = TRACE.slice(0, shown);
+  const paid = done.filter((s) => s.actor === "Client").length;
+  const debits = done.filter((s) => s.actor === "Bank").length;
+  const broken = shown === TRACE.length;
+  return (
+    <figure className="trace" ref={ref} aria-label="A counterexample from tsmodel check: the client pays, the bank debits, the client retries, and the bank debits again, which breaks debitedOnce">
+      <div className="actors" aria-hidden="true">
+        <div className="actor">
+          <b>Client</b>
+          <span>
+            paid: <em>{paid}</em>
+          </span>
+        </div>
+        <div className="actor">
+          <b>Bank</b>
+          <span>
+            debits: <em>{debits}</em>
+          </span>
+        </div>
+        <span className={`verdict${broken ? " broken" : ""}`}>{broken ? "✗ debitedOnce" : "~ debitedOnce"}</span>
+      </div>
+      <ol>
+        {TRACE.map((s, i) => (
+          <li key={i} className={i < shown ? "" : "later"}>
+            <span className="n">{i + 1}</span>
+            <p className="head">
+              <b>{s.actor}</b>
+              <span>
+                {s.step}
+                {s.from ? ` from ${s.from}` : ""}
+              </span>
+            </p>
+            <p className="says">{s.says}</p>
+            {s.breaks ? <p className="breaks">✗ {s.breaks}</p> : null}
+          </li>
+        ))}
+      </ol>
+      <figcaption>tsmodel check · the shortest counterexample</figcaption>
+    </figure>
+  );
+}
+
+/** Three moments to reach for tsmodel, each on a real playground, switched by tabs. */
 function Showcases() {
-  const [current, setCurrent] = useState(SHOWCASES[1].id);
-  const shown = SHOWCASES.find((item) => item.id === current) ?? SHOWCASES[1];
+  const [current, setCurrent] = useState(SHOWCASES[1]!.id);
+  const shown = SHOWCASES.find((item) => item.id === current) ?? SHOWCASES[1]!;
   const href = `/s/${shown.repository}/${shown.at ?? ""}`;
   return (
-    <div className="mt-12">
-      <div role="tablist" aria-label="When to use tsmodel" className="grid gap-2 sm:flex sm:flex-wrap">
+    <div>
+      <div role="tablist" aria-label="When to use tsmodel" className="moments">
         {SHOWCASES.map((item) => (
-          <button
-            key={item.id}
-            id={`tab-${item.id}`}
-            role="tab"
-            type="button"
-            aria-selected={item.id === current}
-            aria-controls="showcase"
-            onClick={() => setCurrent(item.id)}
-            className="cursor-pointer rounded-lg px-4 py-2.5 text-left ring-1 ring-kumo-line transition-colors hover:bg-kumo-tint aria-selected:bg-kumo-contrast aria-selected:text-kumo-inverse aria-selected:ring-kumo-contrast"
-          >
-            <span className="font-medium">{item.moment}</span>
-            <span className="opacity-70"> · {item.example}</span>
+          <button key={item.id} id={`tab-${item.id}`} role="tab" type="button" aria-selected={item.id === current} aria-controls="showcase" onClick={() => setCurrent(item.id)}>
+            {item.moment} <span>· {item.example}</span>
           </button>
         ))}
       </div>
-      <div id="showcase" role="tabpanel" aria-labelledby={`tab-${shown.id}`} className="mt-4">
-        <Preview showcase={shown} href={href} />
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-kumo-subtle">{shown.text}</p>
-          <LinkButton href={href} variant="secondary" icon={ArrowRightIcon} className="sm:hidden">
-            Explore playground
-          </LinkButton>
+      <div id="showcase" role="tabpanel" aria-labelledby={`tab-${shown.id}`}>
+        <a className="shot" href={href}>
+          <picture>
+            <source srcSet={`/${shown.image}-dark.jpg`} media="(prefers-color-scheme: dark)" />
+            <img src={`/${shown.image}-light.jpg`} alt={shown.alt} width={1500} height={900} />
+          </picture>
+          <span className="open button">
+            Explore playground <ArrowRightIcon size={16} weight="bold" />
+          </span>
+        </a>
+        <div className="shot-foot">
+          <p>{shown.text}</p>
+          <a className="more" href={href}>
+            Explore playground <ArrowRightIcon size={14} weight="bold" />
+          </a>
         </div>
       </div>
     </div>
   );
 }
 
-/** A screenshot of the playground in both modes; on wider screens, the whole image opens it. */
-function Preview({ showcase, href }: { showcase: Showcase; href: string }) {
-  const images = (
-    <>
-      <img src={`/${showcase.image}-light.jpg`} alt={showcase.alt} width={1500} height={900} className="block w-full [[data-mode=dark]_&]:hidden" />
-      <img src={`/${showcase.image}-dark.jpg`} alt={showcase.alt} width={1500} height={900} className="hidden w-full [[data-mode=dark]_&]:block" />
-    </>
-  );
-  const frame = "overflow-hidden rounded-2xl ring-1 ring-kumo-line shadow-[0_12px_40px_-12px_rgb(0_0_0/0.25)]";
-  return (
-    <>
-      <div className={`${frame} sm:hidden`}>{images}</div>
-      <a href={href} className={`${frame} group relative hidden sm:block`}>
-        {images}
-        <span className="absolute inset-0 flex items-center justify-center bg-kumo-contrast/0 transition-colors duration-300 group-hover:bg-kumo-contrast/25 group-focus-visible:bg-kumo-contrast/25">
-          <span className="flex translate-y-1 items-center gap-2 rounded-lg bg-kumo-brand px-5 py-3 font-medium text-white opacity-0 shadow-lg transition duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-            Explore playground <ArrowRightIcon size={18} />
-          </span>
-        </span>
-      </a>
-    </>
-  );
-}
-
 /** A highlighted snippet (from scripts/highlight.ts) with what it is and a copy button. */
-function CodeBlock({ snippet, label }: { snippet: { code: string; html: string }; label: string }) {
+function Code({ snippet, label, prose = false }: { snippet: { code: string; html: string }; label: string; prose?: boolean }) {
   const [copied, setCopied] = useState(false);
   const copy = () => void navigator.clipboard.writeText(snippet.code).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1500)));
   return (
-    <figure className="flex min-w-0 flex-col items-start overflow-hidden rounded-lg bg-kumo-recessed ring-1 ring-kumo-hairline">
-      <figcaption className="flex w-full items-center justify-between border-b border-kumo-hairline py-1 pl-4 pr-1 text-sm text-kumo-subtle">
-        <span className="font-mono">{label}</span>
-        <Button variant="ghost" size="xs" icon={copied ? CheckIcon : CopyIcon} onClick={copy}>
+    <figure className={prose ? "code prose" : "code"}>
+      <figcaption>
+        <span>{label}</span>
+        <button type="button" className="copy" onClick={copy}>
+          {copied ? <CheckIcon size={14} weight="bold" /> : <CopyIcon size={14} weight="bold" />}
           {copied ? "Copied" : "Copy"}
-        </Button>
+        </button>
       </figcaption>
-      <div className="code w-full self-start overflow-x-auto p-4 text-[12px] leading-relaxed" dangerouslySetInnerHTML={{ __html: snippet.html }} />
+      <div className="body" dangerouslySetInnerHTML={{ __html: snippet.html }} />
     </figure>
   );
-}
-
-function Section({ id, title, lead, children }: { id: string; title: string; lead: string; children: ReactNode }) {
-  return (
-    <section id={id} className="scroll-mt-8 py-16">
-      <Text variant="heading2" as="h2">
-        {title}
-      </Text>
-      <p className="mt-2 mb-8 max-w-2xl text-kumo-subtle text-pretty">{lead}</p>
-      {children}
-    </section>
-  );
-}
-
-function ModeToggle() {
-  const toggle = () => {
-    const next = document.documentElement.getAttribute("data-mode") === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-mode", next);
-    localStorage.setItem("tsmodel.mode", next);
-  };
-  return <Button variant="ghost" size="sm" shape="square" icon={CircleHalfIcon} aria-label="Toggle light and dark" onClick={toggle} />;
 }

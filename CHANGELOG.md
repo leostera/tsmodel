@@ -19,10 +19,20 @@ project was Feynman: the entries below that date use its names.
   `packages/tsmodel` (`@tsmodel/tsmodel`), the site `sites/tsmodel.leostera.dev`, and the
   workspace packages `@tsmodel/share` and `@tsmodel/site`.
 
+- The README says what tsmodel does for the people who use it. How the repository works, and
+  how to build, test, release and deploy it, moved to `CONTRIBUTING.md`, and `AGENTS.md`
+  points agents there.
+
 ### Site
 
 - Served at [tsmodel.leostera.dev](https://tsmodel.leostera.dev). feynman.leostera.dev
   redirects there, path and query kept.
+- A new look, after clankmail.leostera.dev: flat black and white, Bricolage headings, and
+  hairlines in place of cards. Every two-column row splits on the page's centre line. The
+  hero replays the payments counterexample step by step. The page follows the system's light
+  or dark setting; the toggle is gone. Kumo and Tailwind are gone from the site, and its CSS
+  is 9 KB instead of 160 KB.
+- The explorer's status pages and the 404 page have the same look.
 
 ### Explorer
 

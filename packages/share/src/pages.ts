@@ -195,17 +195,29 @@ export function errorPage(status: number, title: string, detail = "", log = "", 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escape(title)} · tsmodel</title>
+<meta name="color-scheme" content="light dark">
 <style>
-  body { font: 16px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 4rem auto; padding: 0 1.5rem; color: #1f2328; }
-  pre { background: #f6f8fa; padding: 1rem; overflow: auto; font-size: 13px; border-radius: 6px; }
-  code { font-size: 0.9em; }
-  @media (prefers-color-scheme: dark) { body { background: #0d1117; color: #e6edf3; } pre { background: #161b22; } }
+  @font-face { font-family: "Bricolage"; src: url(/fonts/bricolage.woff2) format("woff2"); font-weight: 200 800; font-display: swap; }
+  :root { --paper: #fff; --ink: #141414; --ink-2: #4f4f4c; --ink-3: #6f6f6b; --hair: #e6e6e3; --fill: #f6f6f4; }
+  @media (prefers-color-scheme: dark) { :root { --paper: #111; --ink: #f2f2f0; --ink-2: #c4c4c0; --ink-3: #9a9a96; --hair: #2a2a29; --fill: #191918; } }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 720px; margin: clamp(48px, 12vh, 112px) auto; padding: 0 24px; }
+  .brand { font: 700 22px/1 "Bricolage", system-ui, sans-serif; letter-spacing: -0.03em; text-decoration: none; }
+  h1 { font: 700 40px/1.06 "Bricolage", system-ui, sans-serif; letter-spacing: -0.03em; margin: 48px 0 16px; text-wrap: balance; }
+  p { color: var(--ink-2); font-size: 17px; margin: 0 0 16px; }
+  a { color: var(--ink); text-underline-offset: 3px; }
+  pre { background: var(--fill); border: 1px solid var(--hair); border-radius: 12px; padding: 16px; overflow: auto; font: 12.5px/1.6 ui-monospace, "SF Mono", Menlo, monospace; }
+  code { font: 0.875em ui-monospace, "SF Mono", Menlo, monospace; background: var(--fill); padding: 1px 5px; border-radius: 4px; }
+  footer { border-top: 1px solid var(--hair); margin-top: 48px; padding-top: 20px; font-size: 14px; color: var(--ink-3); }
 </style>
+<main>
+<a class="brand" href="https://tsmodel.leostera.dev">tsmodel</a>
 <h1>${escape(title)}</h1>
 ${detail ? `<p>${escape(detail)}</p>` : ""}
 ${log ? `<pre>${escape(log)}</pre>` : ""}
-<p><a href="https://tsmodel.leostera.dev">tsmodel</a> serves the explorer of any public repository at
-<code>/s/&lt;host&gt;/&lt;path&gt;?ref=&lt;branch, tag or commit&gt;</code>.</p>
+<footer>tsmodel serves the explorer of any public repository at
+<code>/s/&lt;host&gt;/&lt;path&gt;?ref=&lt;branch, tag or commit&gt;</code>.</footer>
+</main>
 </html>
 `;
   const headers = new Headers({ "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
