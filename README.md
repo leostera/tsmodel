@@ -1,4 +1,4 @@
-# Feynman
+# tsmodel
 
 **Understand how a system behaves, and what each change does to it.**
 
@@ -6,7 +6,7 @@ Code tells you what each part does. It rarely tells you what happens when the pa
 when a reply is lost, a lease runs out mid-write, or two people press the same button. Those
 are the bugs that reach production, and the questions a newcomer cannot answer by reading.
 
-A Feynman spec is one TypeScript file that writes the behaviour down as a program that runs:
+A tsmodel spec is one TypeScript file that writes the behaviour down as a program that runs:
 the actors and their state, the messages between them, the actions people take, and the
 rules that must always hold, each step anchored to the code it stands for. From that one
 file you get:
@@ -25,33 +25,33 @@ file you get:
 - **The code behind each step**, with its call tree, and a warning when that code changes
   under the spec.
 
-See it on a real system: [axo's remote access](https://feynman.leostera.dev/s/github.com/leostera/axo/),
+See it on a real system: [axo's remote access](https://tsmodel.leostera.dev/s/github.com/leostera/axo/),
 where people pair Macs with a one-time code and open terminals on them through a relay.
 
 ## Start
 
-Feynman runs on [Bun](https://bun.sh) 1.3 or later.
+tsmodel runs on [Bun](https://bun.sh) 1.3 or later.
 
 ```sh
-bun add -d @leostera/feynman
-bunx feynman check    # type-check, run the scenarios, explore, and judge every rule
-bunx feynman dev      # the simulator, reloading as the spec changes
-bunx feynman build    # minified standalone .feynman/index.html, plus .gz/.br for static hosting
+bun add -d @tsmodel/tsmodel
+bunx tsmodel check    # type-check, run the scenarios, explore, and judge every rule
+bunx tsmodel dev      # the simulator, reloading as the spec changes
+bunx tsmodel build    # minified standalone .tsmodel/index.html, plus .gz/.br for static hosting
 ```
 
-To learn to write specs, read *[Writing specs with Feynman](book/README.md)*,
+To learn to write specs, read *[Writing specs with tsmodel](book/README.md)*,
 a book that builds every spec step by step, from a first race condition to two-phase commit.
 
-`feynman check --brief` gives one line per property; `--only P` shows one property's
+`tsmodel check --brief` gives one line per property; `--only P` shows one property's
 counterexample, `--json` the whole result, and `--only P --as-scenario` the counterexample
-as a scenario you can paste into the spec. `feynman conform <spec> <log>` asks the other
+as a scenario you can paste into the spec. `tsmodel conform <spec> <log>` asks the other
 way: whether what the system logged, or a production trace (OpenTelemetry, Jaeger, Zipkin),
 is a run of the spec, and if not, the step where they part.
 
-Specs live in `specs/*.ts` and import `@leostera/feynman`:
+Specs live in `specs/*.ts` and import `@tsmodel/tsmodel`:
 
 ```ts
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineSpec, defineZone, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineSpec, defineZone, lose } from "@tsmodel/tsmodel";
 
 // Faults are steps the spec declares: at most one on any path (`--set faults=2` for two).
 const faults = budget("faults", 1);
@@ -123,24 +123,24 @@ together, and says when they do not fit: a message no one receives, an undeclare
 fair steps on one message. Faults come from the faults library (`lose`, `duplicate`,
 `crash`, calls whose failure reaches the caller), built on the same steps as everything else.
 
-[`examples/`](packages/feynman/examples/) has 28 well-known systems (two-phase commit, Raft's vote, chain
+[`examples/`](packages/tsmodel/examples/) has 28 well-known systems (two-phase commit, Raft's vote, chain
 replication, CRDTs, dining philosophers and more), each with a real bug for the checker to
 find, the fix beside it, and most with TLA+ and P models that check the checker.
 
 ## Let your agent write it
 
 Specs are meant to be written by coding agents and read by people. The package ships a skill,
-[`skills/feynman/SKILL.md`](packages/feynman/skills/feynman/SKILL.md), that teaches an agent to read a codebase,
+[`skills/tsmodel/SKILL.md`](packages/tsmodel/skills/tsmodel/SKILL.md), that teaches an agent to read a codebase,
 model one behaviour, check it, and report what it found. Pi loads it from the package; other
-agents can read it at https://feynman.leostera.dev/SKILL.md. A prompt to start from:
+agents can read it at https://tsmodel.leostera.dev/SKILL.md. A prompt to start from:
 
-> Read https://feynman.leostera.dev/SKILL.md, then write a Feynman spec for how <the behaviour>
-> works in this repository. Put it in specs/, and run `bunx feynman check` until every rule
+> Read https://tsmodel.leostera.dev/SKILL.md, then write a tsmodel spec for how <the behaviour>
+> works in this repository. Put it in specs/, and run `bunx tsmodel check` until every rule
 > holds or you can show a real bug. Report what the spec covers and every verdict.
 
 ## Verdicts you can trust
 
-Every rule gets one of four verdicts, and Feynman never rounds up:
+Every rule gets one of four verdicts, and tsmodel never rounds up:
 
 - `✗` broken, with the trace, found by the search, a random run, or a scenario;
 - `✓` holds in every state within the bounds, all of them explored;
@@ -153,27 +153,27 @@ the P checker (`bun run oracles`).
 
 ## This repository
 
-- [`packages/feynman`](packages/feynman): `@leostera/feynman` on npm, the library and CLI.
-  It holds its [README](packages/feynman/README.md), [CHANGELOG](packages/feynman/CHANGELOG.md),
+- [`packages/tsmodel`](packages/tsmodel): `@tsmodel/tsmodel` on npm, the library and CLI.
+  It holds its [README](packages/tsmodel/README.md), [CHANGELOG](packages/tsmodel/CHANGELOG.md),
   examples, tests, and the agent skill. In `src/`: the DSL and engine (`spec`), the checker
   (`check`), sources and call trees (`code`), the CLI (`cli`), the playground kit (`play`),
   and the browser view (`view`); in `examples/oracles/`, TLA+ and P models of the examples.
 - [`packages/share`](packages/share): the explorer of any public git repository, built on
   demand, that the site serves under `/s/`.
-- [`sites/feynman.leostera.dev`](sites/feynman.leostera.dev): the website.
-- [`book`](book/README.md): *Writing specs with Feynman*, a book that teaches it step by step,
+- [`sites/tsmodel.leostera.dev`](sites/tsmodel.leostera.dev): the website.
+- [`book`](book/README.md): *Writing specs with tsmodel*, a book that teaches it step by step,
   with every spec it builds in [`book/specs`](book/specs).
 - [`docs/rfds`](docs/rfds): design documents.
 - [`CHANGELOG.md`](CHANGELOG.md): what changed in the site, the explorer and the repository.
 
-From the root, `bun run test` tests both packages, and `bun run feynman check` checks the
-examples (`feynman.config.ts`).
+From the root, `bun run test` tests both packages, and `bun run tsmodel check` checks the
+examples (`tsmodel.config.ts`).
 
 ```sh
 bun install
 bun run test         # both packages, but not the oracles
 bun run typecheck
-bun run feynman dev  # the examples in the simulator
+bun run tsmodel dev  # the examples in the simulator
 ```
 
 Status: early. The DSL may still change between minor versions.

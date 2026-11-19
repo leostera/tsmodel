@@ -3,7 +3,7 @@
 // Expected: every property holds. `idempotencyKey` and `rearmHolds` are
 // needed; `payOnlyTheHolder` is not needed by `oneTicket`, which is too weak to notice it,
 // and `resumePayments` is needed only with two faults (`--set faults=2`).
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

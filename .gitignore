@@ -1,8 +1,8 @@
 node_modules/
 dist/
-**/.feynman/index.html
-**/.feynman/index.html.gz
-**/.feynman/index.html.br
+**/.tsmodel/index.html
+**/.tsmodel/index.html.gz
+**/.tsmodel/index.html.br
 
 # benchmark results and profiles
-packages/feynman/bench/out/
+packages/tsmodel/bench/out/

@@ -1,4 +1,0 @@
-Read https://feynman.leostera.dev/SKILL.md. Trace <the behavior> through this repository and
-write a Feynman spec that models it. Check the spec, correct modeling mistakes, and report any
-counterexample that points to a possible bug in the code. Summarize the behavior covered, the
-scenarios, and every checker verdict.

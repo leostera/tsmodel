@@ -7,14 +7,15 @@ FROM oven/bun:1.4.4-debian
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates git coreutils \
   && rm -rf /var/lib/apt/lists/*
-# The published Feynman, the same one `bunx @leostera/feynman` runs. Specs need nothing else
-# installed: their `@leostera/feynman` imports resolve to this installation.
-ARG FEYNMAN_VERSION=0.16.0
-RUN mkdir -p /opt/feynman \
-  && cd /opt/feynman \
+# The published tsmodel, the same one `bunx @tsmodel/tsmodel` runs. Specs need nothing else
+# installed: their `@tsmodel/tsmodel` imports (or `@leostera/feynman`, from before the rename)
+# resolve to this installation.
+ARG TSMODEL_VERSION=0.17.0
+RUN mkdir -p /opt/tsmodel \
+  && cd /opt/tsmodel \
   && echo '{"private":true}' > package.json \
-  && bun add "@leostera/feynman@${FEYNMAN_VERSION}" \
-  && ln -s /opt/feynman/node_modules/@leostera/feynman/bin/feynman.ts /usr/local/bin/feynman
+  && bun add "@tsmodel/tsmodel@${TSMODEL_VERSION}" \
+  && ln -s /opt/tsmodel/node_modules/@tsmodel/tsmodel/bin/tsmodel.ts /usr/local/bin/tsmodel
 COPY --from=sandbox-tools /usr/local/bin/sandbox-shim /usr/local/bin/sandbox-shim
 RUN mkdir -p /workspace
 WORKDIR /workspace

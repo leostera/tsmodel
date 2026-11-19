@@ -2,7 +2,7 @@
 //
 // Expected: no properties yet; the scenario sets up two people, and the checker explores
 // from its end as well as from the start, with one person.
-import { atMost, defineActor, defineMessage, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

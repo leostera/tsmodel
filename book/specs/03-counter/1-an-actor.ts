@@ -1,7 +1,7 @@
 // Chapter 3, step 1: an actor and its state, and nothing it can do.
 //
 // Expected: one state, and stuck: nothing can happen there.
-import { defineActor, defineSpec, defineZone } from "@leostera/feynman";
+import { defineActor, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const theatre = defineZone({ name: "Theatre", description: "the box office at the door" });
 

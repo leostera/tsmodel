@@ -141,7 +141,7 @@ and for a message, who sent it. A line can say more, the `inputs`, the `payload`
 `state` the instance was left in, and then the spec's step must match that too.
 
 ```sh
-feynman conform specs/15-triage/1-the-agents-draft.ts specs/15-triage/two-holds.jsonl
+tsmodel conform specs/15-triage/1-the-agents-draft.ts specs/15-triage/two-holds.jsonl
 ```
 
 ```text
@@ -183,20 +183,20 @@ them is wrong.
 A test server is one thing. Production is where the interesting orders happen, and production
 is traced. `conform` reads traces too: OpenTelemetry's OTLP JSON (what the Collector's file
 exporter writes, and what Tempo's API returns), Jaeger's JSON, and Zipkin's. A span is a step
-of the spec when it has a `feynman.step` attribute:
+of the spec when it has a `tsmodel.step` attribute:
 
 ```ts
-const span = tracer.startSpan("POST /hold", { attributes: { "feynman.step": "hold" } }, ctx);
+const span = tracer.startSpan("POST /hold", { attributes: { "tsmodel.step": "hold" } }, ctx);
 ```
 
 Everything else comes from the trace itself:
 - **The instance** is the span's service: `service.instance.id`, else `service.name`. The two
   phones are replicas of one `phone` service, so their resources also say
-  `"feynman.actor": "Person"`.
+  `"tsmodel.actor": "Person"`.
 - **The sender** of a message is the nearest span up the parents, or across the links, that
   belongs to another of the spec's instances. Spans in between, like a gateway's, are skipped.
-- **Inputs, payloads and state** may be given as `feynman.inputs`, `feynman.payload` and
-  `feynman.state` (JSON), or field by field (`feynman.payload.value`).
+- **Inputs, payloads and state** may be given as `tsmodel.inputs`, `tsmodel.payload` and
+  `tsmodel.state` (JSON), or field by field (`tsmodel.payload.value`).
 
 [`specs/15-triage/two-holds.otlp.json`](specs/15-triage/two-holds.otlp.json) is the same
 race, traced with the OpenTelemetry SDK, with the box office's clock 40ms behind the phones':
@@ -219,11 +219,11 @@ never quite agree, so `conform` doesn't trust them. It keeps only two orders: ea
 own, and cause before effect. The trace is a run when some order of its steps that keeps both
 is a run of the spec. `--order time` trusts the clocks instead.
 
-Most systems' spans don't say `feynman.step`, and we don't have to add it. A mapping reads the
+Most systems' spans don't say `tsmodel.step`, and we don't have to add it. A mapping reads the
 spans they already have:
 
 ```ts
-import { defineTraceMapping } from "@leostera/feynman/config";
+import { defineTraceMapping } from "@tsmodel/tsmodel/config";
 
 export default defineTraceMapping((span) => {
   if (span.attributes["http.route"] === "/hold") return { key: "hold" };
@@ -233,7 +233,7 @@ export default defineTraceMapping((span) => {
 ```
 
 ```sh
-feynman conform specs/15-triage/2-one-statement.ts trace.json --map trace-map.ts
+tsmodel conform specs/15-triage/2-one-statement.ts trace.json --map trace-map.ts
 ```
 
 A trace file often has many traces. `--trace ID` checks one of them.
@@ -358,7 +358,7 @@ const paymentsEnd = defineProperty("paymentsEnd", {
 And keep the story as a flow. `--as-scenario` writes it out:
 
 ```sh
-feynman check specs/15-triage/3-a-faithful-restart.ts --only paymentsEnd --as-scenario
+tsmodel check specs/15-triage/3-a-faithful-restart.ts --only paymentsEnd --as-scenario
 ```
 
 ```ts
@@ -432,7 +432,7 @@ const restartMidPayment = defineScenario("A restart mid-payment", {
 ```
 
 Then fix the code: `markSold` returns the buyer, and both `handlePay` and `resumePayment` email
-the ticket. Point the `charged` and `resume` steps at the new lines, and `feynman lock`.
+the ticket. Point the `charged` and `resume` steps at the new lines, and `tsmodel lock`.
 
 ## The other way round: a `✓` that lies
 
@@ -494,7 +494,7 @@ When an agent hands you a spec and its findings:
 
 ## Exercises
 
-1. Run `feynman check specs/15-triage/1-the-agents-draft.ts --only oneTicket`. Retell
+1. Run `tsmodel check specs/15-triage/1-the-agents-draft.ts --only oneTicket`. Retell
    the 18-event story. Where does it go wrong, and which step of it would you check first?
 2. The fix emails the ticket. What if the email is lost? Add `lose(Ticket)` and see what breaks.
    Is it the same kind of finding?

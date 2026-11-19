@@ -3,7 +3,7 @@
 //
 // Expected: `neverOvercounts` holds, even when a message arrives twice; `everyLikeCounts`
 // still breaks with one lost message.
-import { atMost, budget, recordOf, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@leostera/feynman";
+import { atMost, budget, recordOf, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

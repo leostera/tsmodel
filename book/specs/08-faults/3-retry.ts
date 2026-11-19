@@ -2,7 +2,7 @@
 //
 // Expected: `chargedOnce` breaks in 9 events with one fault: the bank charges, its answer is
 // lost, the call fails, and the retry charges the card again.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

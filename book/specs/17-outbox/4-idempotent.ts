@@ -2,7 +2,7 @@
 // broker may also deliver an event twice, as most do.
 //
 // Expected: every property holds, and `dedupe` is needed.
-import { atMost, budget, crash, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineSpec, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineSpec, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

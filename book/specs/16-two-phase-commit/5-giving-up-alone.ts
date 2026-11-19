@@ -2,7 +2,7 @@
 //
 // Expected: `nobodyWaitsForever` holds now, and `atomic` breaks with no faults: the timer fires
 // while the commit is on its way.
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

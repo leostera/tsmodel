@@ -4,7 +4,7 @@ Most bugs that reach production are not typos. The code does what it says. The t
 what happens when two pieces of it run at the same time, or a message arrives late, or a
 process restarts halfway through. Nobody wrote that behaviour down, so nobody reviewed it.
 
-A Feynman spec writes it down as a small program, and a model checker runs that program in
+A tsmodel spec writes it down as a small program, and a model checker runs that program in
 every order it can. This chapter builds one spec from nothing and finds a real bug with it.
 We will not explain every line yet. The point is to see the whole loop once: describe the
 system, say what must stay true, let the checker look, and read what it found.
@@ -26,11 +26,11 @@ before it debits, so it looks safe. Let's find out.
 
 ## Writing it down
 
-A spec is a TypeScript file. It starts by importing Feynman and naming the things the
+A spec is a TypeScript file. It starts by importing tsmodel and naming the things the
 system is made of. First, the accounts:
 
 ```ts
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const ACCOUNTS = ["alice", "bob"] as const;
 type Account = (typeof ACCOUNTS)[number];
@@ -60,7 +60,7 @@ const Debited = defineMessage("Debited", {}, { tone: "reply" });
 const Credit = defineMessage("Credit", { account, amount: Number });
 ```
 
-`{ account, amount: Number }` is a schema. Feynman checks every message sent against it, and
+`{ account, amount: Number }` is a schema. tsmodel checks every message sent against it, and
 TypeScript gets its type from it, so a handler for `Debit` knows `msg.account` is one of the
 two accounts and `msg.amount` is a number. `tone: "reply"` only tells the views to draw it
 as an answer.
@@ -110,7 +110,7 @@ Read it top to bottom:
 - `initialState` is what it holds when the world begins.
 - `transitions` are its **steps**. Each one is `on` a message: when a `Read` arrives, the
   `read` step runs. `run` changes the state in place and may send messages. `sends` lists
-  what it may send, and Feynman holds it to that.
+  what it may send, and tsmodel holds it to that.
 - `ctx.reply` answers whoever sent the message being handled.
 
 The worker is the other actor. It has a little more state, because it goes through stages,
@@ -138,7 +138,7 @@ function expectStage<K extends Stage["kind"]>(stage: Stage, kind: K): Extract<St
 
 A stage is one value, not a handful of booleans, so a worker can't be "reading" and
 "debiting" at once. `expectStage` is there for us, the authors. If the model ever delivers an
-answer the worker didn't ask for, the step throws. Feynman reports that as a spec error rather
+answer the worker didn't ask for, the step throws. tsmodel reports that as a spec error rather
 than carrying on with a world that makes no sense.
 
 ```ts
@@ -260,7 +260,7 @@ until nothing is pending. The whole file is
 ## Checking it
 
 ```sh
-feynman check specs/01-wire/1-overdraft.ts
+tsmodel check specs/01-wire/1-overdraft.ts
 ```
 
 ```text
@@ -283,7 +283,7 @@ But one worker is not the system we described. We said there can be more than on
 for two:
 
 ```sh
-feynman check specs/01-wire/1-overdraft.ts --instances Wire=2
+tsmodel check specs/01-wire/1-overdraft.ts --instances Wire=2
 ```
 
 ```text
@@ -402,12 +402,12 @@ const twoAtOnce = defineScenario("Two at once", {
 });
 ```
 
-Now `feynman check specs/01-wire/2-fixed.ts` says both properties hold, with two workers.
+Now `tsmodel check specs/01-wire/2-fixed.ts` says both properties hold, with two workers.
 
 ## Keeping the fix honest
 
 One question is left. The property holds, but would it notice if someone removed the check
-next year? Feynman lets us say which part of the design a property depends on. We name the
+next year? tsmodel lets us say which part of the design a property depends on. We name the
 fix as a **rule**, read it where it applies, and say the property `needs` it:
 
 ```ts
@@ -437,21 +437,21 @@ Wire transfers: explored 376 states (1 of each actor, and from the end of 2 scen
 
 The checker checked the design as written, and again without the rule. Without it, the
 overdraft came back in 8 events, so the rule is doing its job and the property can see it.
-`feynman check specs/01-wire/3-rule.ts --without atomicDebit` shows that counterexample
+`tsmodel check specs/01-wire/3-rule.ts --without atomicDebit` shows that counterexample
 whenever someone asks why the check is there. Chapter 11 is about rules.
 
 ## What just happened
 
 We described a system in about 150 lines of TypeScript. None of it was the bank's real code.
 It was the bank's behaviour: who keeps what, who tells whom, and what people do. From that,
-Feynman:
+tsmodel:
 
 - explored every order of events within its bounds, and told us how many worlds that was;
 - found the shortest run that breaks the rule, and showed it event by event;
 - told us the bug needs no faults;
 - after the fix, confirmed the fix is what keeps the property true.
 
-`feynman dev` opens the same spec in the simulator. You can press "Transfer" on two workers,
+`tsmodel dev` opens the same spec in the simulator. You can press "Transfer" on two workers,
 deliver the messages in any order, and watch Alice go to −1. Chapter 14 is about making that
 view worth looking at.
 

@@ -3,7 +3,7 @@
 //
 // Expected: `everyOrderShips` and `onlyOrdersShip` hold; `shippedOnce` breaks with one fault:
 // the relay publishes, the broker's acknowledgement is lost, and the relay publishes again.
-import { atMost, budget, crash, defineActor, defineCall, defineMessage, defineProperty, defineSpec, defineZone, failed, lose } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineCall, defineMessage, defineProperty, defineSpec, defineZone, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

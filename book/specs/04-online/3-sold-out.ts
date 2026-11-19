@@ -1,7 +1,7 @@
 // Chapter 4, step 3: the box office says when a seat is gone.
 //
 // Expected: no properties, nothing stuck.
-import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

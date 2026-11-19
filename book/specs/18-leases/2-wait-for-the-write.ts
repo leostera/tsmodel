@@ -2,7 +2,7 @@
 //
 // Expected: `noStaleWrites` holds; `lockIsFreed` still breaks with one fault: a worker
 // restarts holding the lock, and nobody can ever take it again.
-import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

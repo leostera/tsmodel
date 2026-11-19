@@ -1,10 +1,10 @@
-# Writing specs with Feynman
+# Writing specs with tsmodel
 
 *A book about describing how systems behave, checking them, and explaining them.*
 
 Code tells you what each part does. A spec tells you what happens when the parts meet: two
 people press the button at once, the answer never comes back, the server restarts halfway
-through, the timer fires first. This book teaches you to write those specs with Feynman, in
+through, the timer fires first. This book teaches you to write those specs with tsmodel, in
 TypeScript, and to read what the checker tells you about them.
 
 It's written for engineers who know TypeScript and have shipped a distributed system, even a
@@ -61,11 +61,11 @@ Do the exercises. Most take a few minutes, and the checker tells you whether you
 To run a step:
 
 ```sh
-bun packages/feynman/bin/feynman.ts check book/specs/16-two-phase-commit/7-a-restart.ts
+bun packages/tsmodel/bin/tsmodel.ts check book/specs/16-two-phase-commit/7-a-restart.ts
 ```
 
-or, with Feynman installed in your own project, copy the file next to your `package.json` and
-run `feynman check <file>`. The comment at the top of every step says what to expect from it.
+or, with tsmodel installed in your own project, copy the file next to your `package.json` and
+run `tsmodel check <file>`. The comment at the top of every step says what to expect from it.
 
 ## Where it came from
 

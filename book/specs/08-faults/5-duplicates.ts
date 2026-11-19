@@ -1,7 +1,7 @@
 // Chapter 8, step 5: the network may also deliver a charge twice.
 //
 // Expected: both properties hold, with one fault and with two (`--set faults=2`).
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

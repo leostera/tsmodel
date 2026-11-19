@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "types": ["bun", "node", "vite/client"],
+    "paths": {
+      "@tsmodel/tsmodel": ["./src/spec/index.ts"],
+      "@tsmodel/tsmodel/play": ["./src/play/index.ts"],
+      "@tsmodel/tsmodel/config": ["./src/cli/index.ts"]
+    }
+  },
+  "include": ["bin", "src", "test", "examples"],
+  "exclude": ["test/**/fixtures/projects"]
+}

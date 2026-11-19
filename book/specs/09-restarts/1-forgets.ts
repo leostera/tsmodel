@@ -3,7 +3,7 @@
 // Expected: `oneTicket` breaks in 9 events with one fault, from the end of "Alice buys the
 // last seat": the box office restarts, forgets it sold the seat, and sells it to Bob. And it
 // gets stuck: a restart during a payment forgets the payment, and the buyer waits forever.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

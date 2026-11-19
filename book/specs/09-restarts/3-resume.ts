@@ -1,7 +1,7 @@
 // Chapter 9, step 3: after a restart, the box office resumes the payments in progress.
 //
 // Expected: both properties hold, and nothing is stuck, with one fault and with two.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

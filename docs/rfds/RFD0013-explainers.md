@@ -13,10 +13,10 @@
 An explainer is a self-contained web page that tells, as a blog post would, how one spec's
 system works and how it breaks. An agent writes the story in
 `specs/<spec>.explainer.md`: markdown, plus a few directives (`::play`, `::flow`, `::map`,
-`::verdicts`, `::code`) that name parts of the spec. `feynman explain <spec>` turns that file
+`::verdicts`, `::code`) that name parts of the spec. `tsmodel explain <spec>` turns that file
 into one HTML page. The page shows the explorer's own components, inline in the prose: the
 playground's stage replaying a scenario or a counterexample, the Flows page's sequence
-diagram, the Checks page's cards, the Code tab's sources. Feynman owns every fact and every
+diagram, the Checks page's cards, the Code tab's sources. tsmodel owns every fact and every
 picture, recorded from runs at build time. The agent owns the order, the words and the
 emphasis. The same command guides the agent from first contact: run without an explainer, it
 prints a brief of what the spec holds and how to write one; run with one, it checks every
@@ -45,10 +45,10 @@ diagrams by hand, and nothing checks that a diagram still shows what the code do
 
 ### The explorer shows everything, and tells nothing
 
-Feynman already derives a map, flows, a playground and checks from a spec (RFD0003). They are
+tsmodel already derives a map, flows, a playground and checks from a spec (RFD0003). They are
 an app: a reader must know where to click, in what order, and why. Chapter 14 of the book
 (`book/14-explaining.md`) gives a ten-minute tour of any spec. It's a good tour, and it needs
-a person to give it. Nothing in Feynman says *this is the part that matters, look here, now
+a person to give it. Nothing in tsmodel says *this is the part that matters, look here, now
 watch it break*.
 
 ### Agents write stories well and facts badly
@@ -65,14 +65,14 @@ checker, and the agent should only arrange them and explain them.
 - Every fact on the page (a trace, a diagram, a verdict, a count of faults, a code snippet)
   comes from a run of the spec at build time. No picture is drawn by hand.
 - A build fails, rather than ship a page whose figures say something the spec no longer does.
-- The workflow is driven by Feynman: an agent that only knows `feynman explain` is told what
+- The workflow is driven by tsmodel: an agent that only knows `tsmodel explain` is told what
   to write, then told what's wrong with what it wrote.
 - Prose stays prose: markdown an agent writes well and a person reviews in a diff.
 
 ## Non-goals
 
-- Feynman does not write prose. No generated text beyond titles and the brief.
-- Feynman does not judge prose. It checks references and claims made with directives. It
+- tsmodel does not write prose. No generated text beyond titles and the brief.
+- tsmodel does not judge prose. It checks references and claims made with directives. It
   does not read sentences for meaning.
 - Not a general documentation site, nor MDX: prose can't run code or import components.
 - Not a replacement for the explorer. Every figure links to it.
@@ -85,10 +85,10 @@ checker, and the agent should only arrange them and explain them.
 An agent is asked: "write an explainer for how a payment works". It runs:
 
 ```sh
-feynman explain box-office
+tsmodel explain box-office
 ```
 
-There is no `specs/box-office.explainer.md` yet, so Feynman prints a brief and exits 0:
+There is no `specs/box-office.explainer.md` yet, so tsmodel prints a brief and exits 0:
 
 ```text
 No explainer for Box office yet. Write specs/box-office.explainer.md, then run this again.
@@ -111,7 +111,7 @@ A shape that works (book/14-explaining.md, book/16-two-phase-commit.md):
   4. What holds, within which bounds.                ::verdicts
   5. What the spec leaves out.
 
-Directives: ::map ::play ::flow ::verdicts ::rules ::code (feynman explain --directives)
+Directives: ::map ::play ::flow ::verdicts ::rules ::code (tsmodel explain --directives)
 ```
 
 The agent writes the file:
@@ -146,13 +146,13 @@ Without the order number, the retry charges Alice twice…
 ::verdicts
 ```
 
-and runs `feynman explain box-office` again. Feynman checks the file and builds it:
+and runs `tsmodel explain box-office` again. tsmodel checks the file and builds it:
 
 ```text
 specs/box-office.explainer.md
   ! rule resumePayments is not shown: no ::play{breaks="resumePayments"} and no ::rules
   ! section "The happy path" has a figure and no prose
-.feynman/explainers/box-office.html
+.tsmodel/explainers/box-office.html
 ```
 
 Warnings don't stop the build. Errors do:
@@ -205,7 +205,7 @@ page's look and safety don't depend on the prose.
 | `::rules` | `only` (rule names) | the rule verdicts |
 | `::code` | `step` (`Actor.key`) or `limit` (name) | the sources, as the bundle carries them (`SourceEntry`) |
 
-- `scenario`: a scenario name, run with `runScenario` as `feynman run` runs it.
+- `scenario`: a scenario name, run with `runScenario` as `tsmodel run` runs it.
 - `breaks`: a rule name. The build checks `spec.withoutRules([rule])` with `--only` the
   properties that need it, at the explainer's bounds, and keeps the shortest counterexample.
   Today `RuleVerdict` keeps only its length (`check/rules.ts`). Explainers need the trace,
@@ -214,12 +214,12 @@ page's look and safety don't depend on the prose.
 - `stuck`: the report's stuck counterexample.
 - `at`, `from`, `to`: event indexes within the run, 1-based, as traces print them.
 
-Bounds are the spec's (`feynman.config.ts` `check`), or front matter `check: { depth: 40 }`,
-so an explainer reproduces what `feynman check` says.
+Bounds are the spec's (`tsmodel.config.ts` `check`), or front matter `check: { depth: 40 }`,
+so an explainer reproduces what `tsmodel check` says.
 
 ### What the build records
 
-`feynman explain` loads the spec as `check` does (types, sources, playground file), runs the
+`tsmodel explain` loads the spec as `check` does (types, sources, playground file), runs the
 check once, resolves each directive to a **figure**, and writes the page:
 
 ```ts
@@ -241,7 +241,7 @@ type Figure =
   | { kind: "code"; sources: Record<string, SourceEntry> };
 ```
 
-The page is the explorer's page (`feynman build`, `cli/serve.ts`): the view's script and
+The page is the explorer's page (`tsmodel build`, `cli/serve.ts`): the view's script and
 stylesheet inlined, the spec and playground modules embedded (`Embedded.modules`). `Embedded`
 gains `explainer?: Explainer`. When it's present, `view/main.tsx` renders `Explainer` instead
 of `App`. The spec module stays in the page because the stage draws with the spec's `display`
@@ -267,18 +267,18 @@ reference.
 ### The command
 
 ```text
-feynman explain [spec] [--out FILE|DIR/] [--directives]
+tsmodel explain [spec] [--out FILE|DIR/] [--directives]
 ```
 
 - With no explainer file: print the brief (above) and exit 0. The brief lists the ids each
   directive takes, the rule verdicts with lengths and faults, the findings, and a suggested
   outline taken from the book's chapter shape, with links to the book.
-- With one: lint, then build to `.feynman/explainers/<spec>.html` (or `--out`). Exit 1 on
+- With one: lint, then build to `.tsmodel/explainers/<spec>.html` (or `--out`). Exit 1 on
   errors, 0 otherwise.
 - `--directives` prints the directive reference.
 
-`feynman build` includes every spec's explainer, and the explorer links to it from the spec's
-header. `feynman check` runs the lint's errors for specs that have an explainer, without
+`tsmodel build` includes every spec's explainer, and the explorer links to it from the spec's
+header. `tsmodel check` runs the lint's errors for specs that have an explainer, without
 building, so CI catches a stale explainer where it already catches a failing property.
 
 ### Lint
@@ -300,7 +300,7 @@ Warnings:
   not shown;
 - no `::map`;
 - a section with a figure and no prose, or prose longer than a limit with no figure;
-- the spec has sources marked stale (`feynman lock`): the explainer may describe old code.
+- the spec has sources marked stale (`tsmodel lock`): the explainer may describe old code.
 
 ### Invariants
 
@@ -317,7 +317,7 @@ Warnings:
 ### Security, privacy, and observability
 
 The page embeds the spec's compiled module and, for `::code`, source excerpts, exactly as
-`feynman build` does today. An explainer shared outside a team shares that code. The
+`tsmodel build` does today. An explainer shared outside a team shares that code. The
 footer says so, and `::code` is opt-in per directive. No network requests: repository links
 are plain links.
 
@@ -325,7 +325,7 @@ are plain links.
 
 The page carries the explorer: about 3.2 MB of script before compression, about 1 MB gzipped
 (`dist/view`), against tens of kilobytes for a hand-written page. It's one file, it works
-offline, and `feynman build` already ships the same weight. A static mode (Future
+offline, and `tsmodel build` already ships the same weight. A static mode (Future
 possibilities) would shrink it.
 
 ### Rollout and validation
@@ -333,7 +333,7 @@ possibilities) would shrink it.
 1. Extract the embeddable components, with the explorer unchanged (its tests, and the
    chapter 14 screenshots compared by eye).
 2. `checkRules` keeps counterexamples on request. Tests: the trace replays to the break.
-3. `feynman explain`: the brief, the lint, the build. Tests for every lint error, against
+3. `tsmodel explain`: the brief, the lint, the build. Tests for every lint error, against
    `book/specs/13-code/box-office.ts`.
 4. The `Explainer` page.
 5. The skill gains "Writing an explainer". The book gains a chapter, or a section in 14.
@@ -369,7 +369,7 @@ the look drifts from the explorer's. It's a good later mode (below).
 
 ### The agent writes HTML, with screenshots
 
-What exists today: the agent drives `feynman build`, takes screenshots, and writes the page
+What exists today: the agent drives `tsmodel build`, takes screenshots, and writes the page
 (the book's chapter 14 was made this way). It works, and nothing keeps it true. Every
 screenshot is stale on the next change.
 
@@ -403,7 +403,7 @@ know where to look can use.
   figure was built by hand. Here the figures come from the spec.
 - **Observable and Jupyter**: prose and live output in one document. The lesson is to keep
   computation out of the prose, or the document becomes the program.
-- **`feynman build`** (RFD0003, `cli/serve.ts`): one self-contained page carrying the
+- **`tsmodel build`** (RFD0003, `cli/serve.ts`): one self-contained page carrying the
   explorer, which this extends.
 
 ## Unresolved questions
@@ -411,7 +411,7 @@ know where to look can use.
 ### Before acceptance
 
 - Is the weight acceptable for the first version, or must static figures come first?
-- Should `feynman check` lint explainers by default, or behind a flag?
+- Should `tsmodel check` lint explainers by default, or behind a flag?
 - Should explainers live beside the spec (`specs/x.explainer.md`) or in a separate tree
   (`docs/explainers/`) that names its spec in front matter? The proposal takes the first, as
   playground files do.
@@ -432,8 +432,8 @@ know where to look can use.
 
 - **A static mode**: `--static` draws every figure as SVG and ships no script, for print,
   email, and the 60 KB budget.
-- **Change explainers**: from `feynman diff`, a page that explains what a change does to the
+- **Change explainers**: from `tsmodel diff`, a page that explains what a change does to the
   system, the old and new flows side by side, for code review.
-- **Explainers on the site**: `feynman.leostera.dev/s/…` serving a repository's explainers next
+- **Explainers on the site**: `tsmodel.leostera.dev/s/…` serving a repository's explainers next
   to its explorer.
 - **Narrated video**: the recorded runs and the prose are a script and a storyboard.

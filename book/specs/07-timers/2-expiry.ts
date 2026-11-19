@@ -3,7 +3,7 @@
 // Expected, with Alice and Bob: `holdsAreRespected` breaks in 8 events with no faults: Alice
 // holds the seat and pays, her hold expires before the payment arrives, Bob holds the seat,
 // and Alice's payment takes it from him.
-import { atMost, defineActor, defineLimit, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineLimit, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 // The last seat: one seat, and what the box office knows about it.
 type Seat = { kind: "free" } | { kind: "held"; by: string } | { kind: "sold"; to: string };

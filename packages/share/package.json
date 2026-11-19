@@ -1,8 +1,8 @@
 {
-  "name": "@feynman/share",
+  "name": "@tsmodel/share",
   "private": true,
   "type": "module",
-  "description": "The Feynman explorer of any public git repository, built in a sandbox and kept in R2 by commit: a Hono app for a Worker to mount.",
+  "description": "The tsmodel explorer of any public git repository, built in a sandbox and kept in R2 by commit: a Hono app for a Worker to mount.",
   "exports": {
     ".": "./src/index.ts",
     "./config": "./config.ts"

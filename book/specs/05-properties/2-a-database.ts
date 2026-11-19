@@ -3,7 +3,7 @@
 // Expected, with the two people "Both want A1" brings: `oneOwnerPerSeat` breaks in 10 events
 // with no faults (both checks say A1 is free, both reservations land, both get a ticket);
 // `ticketsMatchTheBooks` breaks too.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

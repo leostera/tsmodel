@@ -2,7 +2,7 @@
 //
 // Expected: `onlyOrdersShip` breaks with one fault: the shop restarts between publishing and
 // saving, and the warehouse ships an order that does not exist.
-import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

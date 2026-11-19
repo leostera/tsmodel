@@ -2,13 +2,47 @@
 
 What changed in this repository outside the npm package, newest first:
 
-- the site, [feynman.leostera.dev](https://feynman.leostera.dev) (`sites/feynman.leostera.dev`);
+- the site, [tsmodel.leostera.dev](https://tsmodel.leostera.dev) (`sites/tsmodel.leostera.dev`);
 - the explorer of any public repository, which the site serves under `/s/` (`packages/share`);
 - how the repository is laid out.
 
 The site and the explorer are deployed, not released, so entries are dated.
-`@leostera/feynman` has its own changelog, release by release, in
-[`packages/feynman/CHANGELOG.md`](packages/feynman/CHANGELOG.md).
+`@tsmodel/tsmodel` has its own changelog, release by release, in
+[`packages/tsmodel/CHANGELOG.md`](packages/tsmodel/CHANGELOG.md). Before 2026-11-19 the
+project was Feynman: the entries below that date use its names.
+
+## 2026-11-19
+
+### Repository
+
+- Feynman is now tsmodel: the repository is `leostera/tsmodel`, the package
+  `packages/tsmodel` (`@tsmodel/tsmodel`), the site `sites/tsmodel.leostera.dev`, and the
+  workspace packages `@tsmodel/share` and `@tsmodel/site`.
+
+### Site
+
+- Served at [tsmodel.leostera.dev](https://tsmodel.leostera.dev). feynman.leostera.dev
+  redirects there, path and query kept.
+
+### Explorer
+
+- Built with tsmodel 0.17.0, which loads repositories still set up for Feynman. Pages are
+  kept in a new R2 bucket, `tsmodel-share`, so each repository builds again once.
+
+## 2026-11-18
+
+### Site
+
+- A GitHub link in the header.
+
+### Explorer
+
+- Builds run in the background. A branch, tag or HEAD shows the last page built for it while
+  its newest commit builds, or after that build failed; anything else shows a page that
+  reloads itself until its page is built. A repository with many specs (axo's) took longer
+  than the 10 minutes a build had on half a vCPU, and its page never loaded: builds now run
+  on 4 vCPUs, with 13 minutes.
+- Built with Feynman 0.16.0.
 
 ## 2026-11-11
 

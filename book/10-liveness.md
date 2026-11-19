@@ -50,10 +50,10 @@ Box office: explored 4,474 states (…, faults=1) in 138ms
   ✓ chargedOnce  No order is charged twice.
   ✓ oneTicket  At most one person has a ticket for the last seat.
   ✗ seatIsSold  The last seat is eventually sold.
-    shortest counterexample, 0 event(s), needs no faults; see it with feynman check specs/10-liveness/1-eventually.ts --only seatIsSold
+    shortest counterexample, 0 event(s), needs no faults; see it with tsmodel check specs/10-liveness/1-eventually.ts --only seatIsSold
   ✓ paymentsEnd  Whoever pays eventually hears back: a ticket, or that their hold expired.
   ✗ holdsEnd  A hold ends: the seat is eventually paid for or free again.
-    shortest counterexample, 4 event(s), needs 1 fault(s); see it with feynman check specs/10-liveness/1-eventually.ts --only holdsEnd
+    shortest counterexample, 4 event(s), needs 1 fault(s); see it with tsmodel check specs/10-liveness/1-eventually.ts --only holdsEnd
 ```
 
 Three properties, two different answers, and one of them has a twist. Take them one at a time.
@@ -75,7 +75,7 @@ anything, ever*. Nobody has to buy a seat. To see why that is allowed, we need f
 A liveness property is judged over infinite behaviours, and some infinite behaviours are
 silly. A message sits in flight forever and is never delivered. A timer stays set and never
 fires. If those counted, nothing could ever be guaranteed. So the checker only considers
-**fair** behaviours, and Feynman's defaults say what is fair:
+**fair** behaviours, and tsmodel's defaults say what is fair:
 
 | Kind of step | Fair? | Meaning |
 | --- | --- | --- |
@@ -143,13 +143,13 @@ behaviour, with up to one fault.
 A search that stops early can't say that. Give it a depth bound, and it stops at 14 events:
 
 ```sh
-feynman check specs/10-liveness/1-eventually.ts --only paymentsEnd --depth 14
+tsmodel check specs/10-liveness/1-eventually.ts --only paymentsEnd --depth 14
 ```
 
 ```text
 Box office: explored 1,702 states (…, depth 14, faults=1) in 269ms
   ~ paymentsEnd  Whoever pays eventually hears back: a ticket, or that their hold expired.  held to depth 14, but paths that had not got there yet were cut off at that depth: it may break further on
-  "~" is not a proof: raise --depth (check.depth in feynman.config.ts; it is 14 now), or leave it out to search every depth, until no path is cut off before it gets there or loops.
+  "~" is not a proof: raise --depth (check.depth in tsmodel.config.ts; it is 14 now), or leave it out to search every depth, until no path is cut off before it gets there or loops.
 ```
 
 `~` is the checker being honest. Some paths were still going at 14 events, and a loop that
@@ -189,7 +189,7 @@ never a promise the box office could make.
 ([`specs/10-liveness/2-rearm.ts`](specs/10-liveness/2-rearm.ts))
 
 ```sh
-feynman check specs/10-liveness/2-rearm.ts
+tsmodel check specs/10-liveness/2-rearm.ts
 ```
 
 ```text
@@ -209,7 +209,7 @@ changes what the system does, so check your scenarios still tell the story you m
 
 ## Stuck, final, and liveness
 
-Feynman reports three related things. They are easy to mix up:
+tsmodel reports three related things. They are easy to mix up:
 
 - **Stuck**: a world where nothing at all can happen (nothing in flight, no timer, no action,
   no fair guard), and the spec's `finalState` doesn't call it finished. Reported for every

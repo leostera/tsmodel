@@ -21,9 +21,9 @@ if (pendingRule.on && state.pending.length) return void state.waiting.push(msg);
 ackedPushesAreVisible: { description: "…", always: (w) => …, needs: [pendingRule] },
 ```
 
-`feynman check` then also checks the design without each rule, and expects every property
+`tsmodel check` then also checks the design without each rule, and expects every property
 that needs it to break. When one doesn't, the check fails: either the rule does nothing, or
-the property is too weak to notice. `feynman check --without pendingRule` checks the design
+the property is too weak to notice. `tsmodel check --without pendingRule` checks the design
 without the rule, with its counterexamples, the way a reader would ask "what goes wrong if
 we drop this?".
 
@@ -39,7 +39,7 @@ asking both questions, and answer them by hand:
   rewrote a handler in a copy to drop a barrier and checked that `readsNeverGoBack` broke.
 - The examples do the same with a factory: `retriedCall("buggy")` and `retriedCall("fixed")`,
   exported as `default` and `fixed`. The CLI only loads the default export, so the fixed
-  variant is only checked by Feynman's own tests.
+  variant is only checked by tsmodel's own tests.
 
 Each time, the result is worth keeping: "without the pending rule, a read misses an
 acknowledged push" is the clearest explanation of why the rule exists. But it lives in a
@@ -62,9 +62,9 @@ author, who knows which parts of the design are load-bearing.
   checker catches a misspelt or deleted rule.
 - A rule is on by default. Turning it off is a variant of the design, built from the same
   spec, with no copy.
-- `feynman check` checks each claim: without the rule, each property that needs it breaks. A
+- `tsmodel check` checks each claim: without the rule, each property that needs it breaks. A
   claim that doesn't hold fails the check, as a broken property does.
-- `feynman check --without RULE` checks the design without one or more rules, with full
+- `tsmodel check --without RULE` checks the design without one or more rules, with full
   counterexamples and `--as-scenario`.
 - Both engines, `--json`, and the explorer show the rules and their verdicts.
 
@@ -116,7 +116,7 @@ no string to misspell, and deleting a rule that a property needs is a type error
 `name` is how the CLI and the reports refer to it (`--without pendingRule`). Two rules with
 one name are a definition error.
 
-### What `feynman check` does
+### What `tsmodel check` does
 
 After the spec's own verdicts, the check lists its rules:
 
@@ -139,13 +139,13 @@ A rule that no property needs isn't checked. It can still be turned off with `--
 ### Looking at the design without a rule
 
 ```
-feynman check ref-view --without pendingRule
-feynman check ref-view --without pendingRule --only readsNeverGoBack --as-scenario
+tsmodel check ref-view --without pendingRule
+tsmodel check ref-view --without pendingRule --only readsNeverGoBack --as-scenario
 ```
 
 This checks the variant as if it were the spec: every property, full counterexamples, and a
 counterexample as scenario code. The report's first line names the rules that are off.
-`feynman run` and `feynman dev` take `--without` too, so a scenario can be watched in the
+`tsmodel run` and `tsmodel dev` take `--without` too, so a scenario can be watched in the
 design without the rule.
 
 ## Reference-level explanation
@@ -225,7 +225,7 @@ properties, but it's still a statement about the design as written: it holds, as
 parts do. A rule's claim is about a different design, the one without the rule: it says that
 there, the property breaks. No property of one design can say that, however it's combined,
 because the design without the rule never runs. That needs a second model, and that's what
-`without` builds. TLA+ users do the same with a `Buggy` constant, as Feynman's own oracles
+`without` builds. TLA+ users do the same with a `Buggy` constant, as tsmodel's own oracles
 do.
 
 Composite properties still help: a property that groups others can need a rule like any
@@ -267,7 +267,7 @@ stay unnoticed until a real bug walks past them.
   surviving mutant points at a weak test. Rules are named mutations of a design.
 - **TLA+ practice** checks a spec with an invariant removed, or a guard weakened, to see TLC
   find the expected bug. This is done by hand, in a copy of the module or with a constant in
-  the `.cfg`, as the `Buggy` constant in Feynman's own oracles does.
+  the `.cfg`, as the `Buggy` constant in tsmodel's own oracles does.
 - **Feature flags** in services turn behaviour on and off by name. Rules are the same idea
   for a model, with a check attached.
 
@@ -299,4 +299,4 @@ stay unnoticed until a real bug walks past them.
   explainer of a design there is.
 - **Suggested rules.** Automatic mutations could propose rules: "removing this guard breaks
   `readsNeverGoBack`; name it?".
-- **Diffs.** `feynman diff` could say when a change makes a rule no longer needed.
+- **Diffs.** `tsmodel diff` could say when a change makes a rule no longer needed.

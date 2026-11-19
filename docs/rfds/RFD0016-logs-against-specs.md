@@ -10,11 +10,11 @@
 
 ## Summary
 
-`feynman conform <spec> <log.jsonl>` answers whether a log of what the system did is a run of
+`tsmodel conform <spec> <log.jsonl>` answers whether a log of what the system did is a run of
 the spec:
 
 ```sh
-feynman conform book/specs/15-triage/2-one-statement.ts book/specs/15-triage/two-holds.jsonl
+tsmodel conform book/specs/15-triage/2-one-statement.ts book/specs/15-triage/two-holds.jsonl
 ```
 
 A log is one JSON object per line. Spawns come first, then one line per step:
@@ -31,7 +31,7 @@ the spec could have done there instead. Up to `--gap` (4) steps the log doesn't 
 between two it does: faults, and the steps of actors that don't log.
 
 A trace works too: OpenTelemetry's OTLP JSON, Jaeger's JSON, or Zipkin's. A span is a step
-when it has a `feynman.step` attribute, or when a mapping module (`--map`) says it is one.
+when it has a `tsmodel.step` attribute, or when a mapping module (`--map`) says it is one.
 The trace gives who took each step, who sent its message, and what caused what. Machines'
 clocks disagree, so a trace is a partial order, and it conforms when some order that keeps
 it is a run.
@@ -47,7 +47,7 @@ The system can answer that itself. It already logs what it does. If a log from a
 from production is not a run of the spec, then either the system did something the spec says
 is impossible, or the spec is wrong about the system. Both are worth knowing. TLA+ has trace
 validation for this: a specification that reads a log, checked with TLC. P has PObserve,
-which runs its monitors over production logs. Feynman specs should get it without writing a
+which runs its monitors over production logs. tsmodel specs should get it without writing a
 second model.
 
 ## Goals
@@ -113,13 +113,13 @@ links, name, kind, start and end in nanoseconds, attributes, and the resource's 
 
 `traceLog(spans, spec, { map, traceId, order })` turns spans into log events:
 
-- **Which spans.** A span with `feynman.step` stands for the line its `feynman.*` attributes
+- **Which spans.** A span with `tsmodel.step` stands for the line its `tsmodel.*` attributes
   make: `instance`, `actor`, `kind`, `message`, `from`, and `inputs`, `payload` and `state`,
-  each either as JSON or field by field (`feynman.payload.value`). Otherwise the mapping, a
+  each either as JSON or field by field (`tsmodel.payload.value`). Otherwise the mapping, a
   module whose default export (`defineTraceMapping`) takes a span and returns a line or
   `undefined`, decides. Every other span is skipped.
-- **Who.** `feynman.instance`, else the resource's `service.instance.id`, else its
-  `service.name`. An instance that isn't a singleton is spawned from `feynman.actor`, set on
+- **Who.** `tsmodel.instance`, else the resource's `service.instance.id`, else its
+  `service.name`. An instance that isn't a singleton is spawned from `tsmodel.actor`, set on
   the span or on the resource.
 - **The sender**, for a step on a message that doesn't say who sent it: the nearest span up
   the parents whose instance is another of the spec's. Spans of services the spec doesn't

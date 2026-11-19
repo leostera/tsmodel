@@ -2,7 +2,7 @@
 // with the others every few seconds, forever, so a lost message is made up by the next sync.
 //
 // Expected: every property holds, with one lost or repeated message.
-import { atMost, budget, defineCall, failed, recordOf, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@leostera/feynman";
+import { atMost, budget, defineCall, failed, recordOf, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

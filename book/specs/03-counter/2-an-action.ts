@@ -1,7 +1,7 @@
 // Chapter 3, step 2: the clerk sells a seat, any seat.
 //
 // Expected: three states (2, 1 and 0 left), and stuck once sold out.
-import { defineActor, defineSpec, defineZone } from "@leostera/feynman";
+import { defineActor, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const theatre = defineZone({ name: "Theatre", description: "the box office at the door" });
 

@@ -2,7 +2,7 @@
 //
 // Expected: both properties hold with one fault. With two (`--set faults=2`), it gets stuck:
 // the charge is lost, and the box office restarts before it hears, so nobody retries.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

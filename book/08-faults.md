@@ -3,9 +3,9 @@
 > *What if the request is lost? What if the reply is?*
 
 Until now, every message arrived. Real networks lose messages, deliver them twice, and time out
-on requests that actually succeeded. In Feynman none of that happens unless the spec says it
+on requests that actually succeeded. In tsmodel none of that happens unless the spec says it
 can. This chapter is about saying so: **faults** are steps the spec declares, from a small
-library that ships with Feynman.
+library that ships with tsmodel.
 
 Why not just let everything fail? Because not everything does. A message on an open TCP
 connection isn't lost on its own. A write to a database that returned isn't undone. A spec
@@ -121,7 +121,7 @@ The box office talks to the bank over the internet. Either the request or the an
 lost. We say so in two steps, one on each side:
 
 ```ts
-import { budget, lose } from "@leostera/feynman";
+import { budget, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);
@@ -201,7 +201,7 @@ The box office talks to the bank with `fetch`. When the request fails, the `fetc
 the code's `catch` block tries again. So `Charge` is a call:
 
 ```ts
-import { defineCall, failed } from "@leostera/feynman";
+import { defineCall, failed } from "@tsmodel/tsmodel";
 
 // A call: an HTTPS request whose failure the box office hears about, as a fetch throws.
 const Charge = defineCall("Charge", { order: String }, { over: "https" });
@@ -336,8 +336,8 @@ The bank's answer is lost
 ([`specs/08-faults/4-idempotent.ts`](specs/08-faults/4-idempotent.ts))
 
 ```sh
-feynman check specs/08-faults/4-idempotent.ts --brief
-feynman check specs/08-faults/4-idempotent.ts --brief --set faults=2
+tsmodel check specs/08-faults/4-idempotent.ts --brief
+tsmodel check specs/08-faults/4-idempotent.ts --brief --set faults=2
 ```
 
 ```text
@@ -374,7 +374,7 @@ bank. Without the key, the duplicate alone would charge twice with no lost messa
 
 ## Step 6: in order, or not
 
-Losing and duplicating are two things networks do. The third is reordering, which Feynman
+Losing and duplicating are two things networks do. The third is reordering, which tsmodel
 does by default: any message in flight may arrive next. Most of the time that is right. Two
 HTTPS requests are two connections, and nothing keeps the second from arriving first.
 

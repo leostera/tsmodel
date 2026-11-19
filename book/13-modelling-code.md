@@ -138,7 +138,7 @@ A limit takes sources too:
 const holdLifetime = defineLimit({ name: "Hold lifetime", value: 10, unit: "minutes", sources: ["book/code/box-office/src/server.ts#HOLD_MINUTES"] });
 ```
 
-`feynman check` resolves every source. One that points at nothing fails the check:
+`tsmodel check` resolves every source. One that points at nothing fails the check:
 
 ```text
   ✗ source book/code/box-office/src/db.ts#Db.holdIfFree Db.holdIfFree is not defined in book/code/box-office/src/db.ts
@@ -160,14 +160,14 @@ one. Split it.
 Once the spec is right, record what the code looked like:
 
 ```sh
-feynman lock
+tsmodel lock
 ```
 
 ```text
-feynman.lock: 18 source(s) locked
+tsmodel.lock: 18 source(s) locked
 ```
 
-`feynman.lock` keeps a hash of the code each source stands for. Commit it with the spec. From
+`tsmodel.lock` keeps a hash of the code each source stands for. Commit it with the spec. From
 then on, `check` compares, and says when code changed under the spec.
 
 Months later, someone reads `onStartup` and decides the bank will call back anyway:
@@ -182,7 +182,7 @@ export async function onStartup(db: Db): Promise<void> {
 ```
 
 ```text
-  ! stale: src/server.ts#onStartup changed since the spec was last locked; check the steps that name it, then run feynman lock
+  ! stale: src/server.ts#onStartup changed since the spec was last locked; check the steps that name it, then run tsmodel lock
 ```
 
 The spec's steps that name `onStartup`, `resume` and `rearm`, may no longer say what the code
@@ -195,7 +195,7 @@ So the reviewer updates the spec to match the code. `resume` goes, and with it t
 claim. Then they ask the question a review is for: *what does this change do to the system?*
 
 ```sh
-feynman diff box-office --base HEAD
+tsmodel diff box-office --base HEAD
 ```
 
 ```text
@@ -249,7 +249,7 @@ That is the review: a two-line change to a startup function, and the spec shows 
 breaks, with the faults it needs. The reviewer can now ask the author the right question:
 *what happens to a payment whose charge never reached the bank?*
 
-`feynman dev --base main` shows the same comparison in the explorer, flow by flow.
+`tsmodel dev --base main` shows the same comparison in the explorer, flow by flow.
 
 ## Writing the spec first
 
@@ -271,5 +271,5 @@ pointing at the code that implements each step. Part I of this book was written 
 2. The phone's `pay` waits for one HTTP response. What happens to the person if that response is
    lost after the server sold the seat? Model it: which message is a call, and what does the
    phone do when it fails?
-3. Run `feynman lock`, then rename `scheduleExpiry` in the code. What does check say? Which kind
+3. Run `tsmodel lock`, then rename `scheduleExpiry` in the code. What does check say? Which kind
    of change does `lock` catch, and which does only reading catch?

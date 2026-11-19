@@ -1,4 +1,4 @@
-// <mount>/<host>/<path>?ref=<branch, tag or commit>: the Feynman explorer of a public git
+// <mount>/<host>/<path>?ref=<branch, tag or commit>: the tsmodel explorer of a public git
 // repository. The ref resolves to a commit with one request to the git host; a commit that has
 // a page in R2 is served from there, and any other is built in a sandbox in the background.
 // Until it is built, a branch, tag or HEAD shows its previous page, and anything else a page
@@ -32,7 +32,7 @@ share.use(async (c, next) => {
   await next();
 });
 
-share.get("/", () => errorPage(404, "Name a repository", "For example /s/github.com/leostera/feynman?ref=main."));
+share.get("/", () => errorPage(404, "Name a repository", "For example /s/github.com/leostera/tsmodel?ref=main."));
 
 share.get("/:repository{.+}", (c) => {
   const parsed = parseRepository(c.req.param("repository"));

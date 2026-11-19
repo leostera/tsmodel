@@ -2,7 +2,7 @@
 // ever gets a seat, and nothing can go wrong.
 //
 // Expected: every property holds, though the box office sells nothing.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

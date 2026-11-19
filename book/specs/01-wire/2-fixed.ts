@@ -1,7 +1,7 @@
 // Chapter 1, step 2: the ledger refuses a debit the balance does not cover.
 //
 // Expected: both properties hold, with two workers too (the scenario "Two at once" sets them up).
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const ACCOUNTS = ["alice", "bob"] as const;
 type Account = (typeof ACCOUNTS)[number];

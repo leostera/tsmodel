@@ -47,7 +47,7 @@ share.
 
 ## Guide-level explanation
 
-Nothing changes in how specs are written. `feynman check` uses worker threads when a search
+Nothing changes in how specs are written. `tsmodel check` uses worker threads when a search
 is big enough to share; `--workers N` (or `check: { workers }` in the config) sets how many,
 and `--workers 0` keeps it on the main thread. The summary line says `on 8 threads` when
 workers took part.
@@ -216,7 +216,7 @@ Big specs stay single-threaded: 2–3× slower than they could be.
 - Balancing within a level, rather than only between levels.
 - How many threads to use by default on machines with efficiency cores: here 4 and 7
   performed about the same.
-- Parallel random runs, and checking specs in parallel in `feynman check`.
+- Parallel random runs, and checking specs in parallel in `tsmodel check`.
 
 ## Future possibilities
 

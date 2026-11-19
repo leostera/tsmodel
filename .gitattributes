@@ -1,5 +1,5 @@
-# Pages built by `feynman build`: bundles of the view and its dependencies, not code anyone
+# Pages built by `tsmodel build`: bundles of the view and its dependencies, not code anyone
 # edits. Kept out of language stats and collapsed in diffs, wherever one gets committed.
-**/.feynman/index.html linguist-vendored linguist-generated -diff
+**/.tsmodel/index.html linguist-vendored linguist-generated -diff
 
 bun.lock linguist-generated

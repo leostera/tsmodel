@@ -31,12 +31,12 @@ does not call final.
    Translating `DiningPhilosophers` from tlaplus/Examples one to one gave the same 58 states
    as TLC and the same safety verdicts, but:
 
-   | | TLC | Feynman |
+   | | TLC | tsmodel |
    | --- | --- | --- |
    | `NoStarvation`, strong fairness (as written) | holds | philosophers 2 to 5 starve |
    | `NoStarvation`, weak fairness | violated | philosophers 2 to 5 starve |
 
-   Left alone always lets philosopher 1 eat first, so it eats forever. And because Feynman
+   Left alone always lets philosopher 1 eat first, so it eats forever. And because tsmodel
    has no fairness, the two specs, which differ exactly in what TLA+ says about starvation,
    get the same answer.
 2. **Real liveness properties have more shapes than one.** "Every request is answered"
@@ -265,7 +265,7 @@ reported as `stuck`, beside errors and broken properties, and fails `check`.
 
 ### Compatibility and migration
 
-Feynman is 0.x; this is a clean break, written up in the CHANGELOG's Migrating section.
+tsmodel is 0.x; this is a clean break, written up in the CHANGELOG's Migrating section.
 
 - `after: P, eventually: Q` becomes `leadsTo: { whenever: P, then: Q }`.
 - `eventually: Q` without `after` meant "left alone, from every world, Q", closest to
@@ -352,7 +352,7 @@ are weakly fair by default. `everyStep` gets the world views before and after, a
   "Open in playground" plays the path and one round of the loop.
 - Whether `settle()` should follow fairness instead of its fixed order.
 - Checking stuck worlds against TLC: the TLA+ oracles bound actions with `Repeats`, so TLC
-  sees a deadlock where the bound runs out; Feynman does not count that as stuck.
+  sees a deadlock where the bound runs out; tsmodel does not count that as stuck.
 
 ### Out of scope
 
@@ -363,4 +363,4 @@ are weakly fair by default. `everyStep` gets the world views before and after, a
 
 - Refinement: check that a spec implements a smaller one, through a mapping of states,
   which is most of the remaining wild `PROPERTY` lines.
-- Translating TLA+ specs to Feynman mechanically, for oracles beyond the hand-picked ones.
+- Translating TLA+ specs to tsmodel mechanically, for oracles beyond the hand-picked ones.

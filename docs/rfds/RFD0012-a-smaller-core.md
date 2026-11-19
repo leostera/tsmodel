@@ -17,7 +17,7 @@ counting the faults a counterexample needs) leaves the core, and is rebuilt as a
 top of it, with the same public API any spec has:
 
 ```ts
-import { budget, crash, defineCall, lose } from "@leostera/feynman/faults";
+import { budget, crash, defineCall, lose } from "@tsmodel/tsmodel/faults";
 
 // One fault per path, shared by every fault below: what `--faults 1` meant. A model variable.
 const faults = budget("faults", 1);
@@ -65,7 +65,7 @@ within one global budget (`--faults 1`). That is one model of failure, chosen fo
 - **It is invisible in the spec.** A reader cannot see which faults a verdict covers; they
   are a CLI flag, and one spec gives different verdicts under different flags.
 
-Feynman should let an author build faults, not impose them.
+tsmodel should let an author build faults, not impose them.
 
 ### Failure is special-cased in every layer
 
@@ -145,7 +145,7 @@ That is all. The core has no faults, no calls, no budgets and no repeat bound.
 
 ### The faults library
 
-`@leostera/feynman/faults` builds failure from the core. Every factory returns an ordinary
+`@tsmodel/tsmodel/faults` builds failure from the core. Every factory returns an ordinary
 step definition (or a message, for `defineCall`), and could be written in a spec instead:
 
 | Library | Built from | Replaces |
@@ -166,7 +166,7 @@ lose a charge, the client can lose an answer, the cache can crash and keep nothi
 
 ### Reports
 
-`feynman check` reads the `fault` tag, as a library would:
+`tsmodel check` reads the `fault` tag, as a library would:
 
 - a counterexample "needs no faults" or "needs 1 fault": its events from steps tagged
   `fault`;
@@ -178,7 +178,7 @@ lose a charge, the client can lose an answer, the cache can crash and keep nothi
   ! no faults: every path has a perfect network and no crashes. Declare the ones the system meets, like lose(Debit) or crash().
   ```
 
-`feynman check --set faults=2` overrides a model variable's initial value, which is how a
+`tsmodel check --set faults=2` overrides a model variable's initial value, which is how a
 budget is raised (`--faults 2` before). It names one of the spec's variables, so it cannot
 bound what the spec does not.
 
@@ -322,7 +322,7 @@ every layer, and every new fault is a new switch. Rejected.
 
 ### Before acceptance
 
-- `@leostera/feynman/faults` as a subpath, or exported from the main entry?
+- `@tsmodel/tsmodel/faults` as a subpath, or exported from the main entry?
 - `throws(Call)`, a call that fails after the callee did the work, is `lose` on the reply
   today. Is that enough, or should the library have it in the first cut?
 - Names: `crash` or `restart`; `atMost` or `upTo`; `defineVariable` or `defineModelState`.

@@ -1,0 +1,20 @@
+// The specs from the wild against TLC on the original models: the same states, and the same
+// verdict on each temporal property. Skipped when tla2tools.jar is not around (TLA_TOOLS_JAR).
+import { describe, expect, test } from "bun:test";
+import { tsmodel, TLA_JAR, tlc } from "../examples/oracle.ts";
+import { wild } from "./wild.ts";
+
+describe.skipIf(!TLA_JAR)("TLC on specs from the wild", () => {
+  for (const w of wild) {
+    test(w.name, async () => {
+      const { module, dir, constants, specification, properties } = w.tla;
+      expect(tlc(module, constants, [], { dir, temporal: { specification, properties: [] } }).distinct).toBe(w.states);
+      expect((await tsmodel(w.spec(), {})).distinct).toBe(w.states);
+      const theirs = Object.fromEntries(Object.entries(properties).map(([id, name]) => [id, tlc(module, constants, [], { dir, temporal: { specification, properties: [name] } }).temporal ? "broken" : "holds"]));
+      expect(theirs).toEqual(w.expect);
+      // Reachable properties: TLC's shortest counterexample to the invariant that one is never reached is the shortest way there.
+      const reached = Object.fromEntries(Object.entries(w.tla.never).map(([id, name]) => [id, tlc(module, constants, [name], { dir }).violated?.events ?? "never"]));
+      expect(reached).toEqual(w.reachable);
+    }, 300_000);
+  }
+});

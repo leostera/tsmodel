@@ -2,7 +2,7 @@
 //
 // Expected: every property holds, every rule is needed, and every source
 // resolves.
-import { atMost, budget, defineActor, defineCall, defineLimit, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineLimit, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /**
  * At most two faults on any path: resuming payments after a restart only matters when a

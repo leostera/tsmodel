@@ -1,7 +1,7 @@
 // Chapter 14, step 3: rows that show the seat and the charges, owners, and what each step says.
 //
 // Expected: the same verdicts.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /**
  * At most two faults on any path: resuming payments after a restart only matters when a

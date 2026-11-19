@@ -87,7 +87,7 @@ Box office: explored 849 states (…, faults=1) in 132ms
 Both findings are gone with one fault. Now give the checker two:
 
 ```sh
-feynman check specs/09-restarts/2-keeps.ts --set faults=2
+tsmodel check specs/09-restarts/2-keeps.ts --set faults=2
 ```
 
 ```text

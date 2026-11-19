@@ -1,7 +1,7 @@
 // Chapter 14, step 4: the ticket as a token, drawn by 4-ticket.play.tsx.
 //
 // Expected: the same verdicts; check loads the playground file.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /**
  * At most two faults on any path: resuming payments after a restart only matters when a

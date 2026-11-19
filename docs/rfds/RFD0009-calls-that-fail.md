@@ -17,7 +17,7 @@ That is what happens to code that makes an RPC or a `fetch`: the call throws.
 
 The caller can't tell a lost request from a lost reply, and neither can its transition. A
 failure after a lost reply means the callee *did* apply the call. So the transition the
-caller writes to retry is exactly where "the retry applies it twice" bugs live. Feynman
+caller writes to retry is exactly where "the retry applies it twice" bugs live. tsmodel
 explores both cases, within the same `--faults` budget.
 
 ## Motivation
@@ -85,7 +85,7 @@ A call is declared with `call` where a message would use `message`. It takes the
 options, so the messages list says which of them are calls:
 
 ```ts
-import { call, defineSpec, message } from "@leostera/feynman";
+import { call, defineSpec, message } from "@tsmodel/tsmodel";
 
 messages: {
   Write: call<{ key: Key }>({ name: "write", over: "rpc" }),
@@ -212,7 +212,7 @@ a call in flight, and on its reply.
 
 ### Compatibility and migration
 
-Nothing changes for a spec without a `call`. Feynman is v0, so `call` lands without a
+Nothing changes for a spec without a `call`. tsmodel is v0, so `call` lands without a
 flag. The skill's timer workaround (from the change that added the lost-message hint) is
 replaced by `call` in the "Faults" bullet.
 

@@ -39,7 +39,7 @@ In chapter 5 the checker found that two people could both get A2. We fixed it, b
 of the bug is worth keeping. `--as-scenario` turns a counterexample into scenario code:
 
 ```sh
-feynman check specs/05-properties/3-steps-and-paths.ts --only soldSeatsStaySold --as-scenario
+tsmodel check specs/05-properties/3-steps-and-paths.ts --only soldSeatsStaySold --as-scenario
 ```
 
 ```ts
@@ -110,7 +110,7 @@ Added to the buggy design ([`specs/06-scenarios/1-the-race.ts`](specs/06-scenari
   ✗ scenario "Both want A2 at once": ticketsMatchTheBooks, oneOwnerPerSeat
 ```
 
-And `feynman run`, which runs the scenarios and prints a line each:
+And `tsmodel run`, which runs the scenarios and prints a line each:
 
 ```text
   ✓ Both want A1  14 event(s)
@@ -231,7 +231,7 @@ says it can't go that way.
 
 ## The playground
 
-`feynman dev` opens the simulator. It is the same spec, drawn:
+`tsmodel dev` opens the simulator. It is the same spec, drawn:
 
 - **The map.** Zones are regions, actors are nodes, and messages in flight travel between
   them. Nodes show their `display.status` and `rows`, coloured by `mood` and by `owner`.
@@ -250,7 +250,7 @@ says it can't go that way.
   exactly this moment. "Copy timeline" gives the events as JSON, which is a quick way to
   write a scenario from something you clicked through.
 
-`feynman build` writes the whole thing as one HTML file, which is how specs end up on a wiki
+`tsmodel build` writes the whole thing as one HTML file, which is how specs end up on a wiki
 page or in a pull request.
 
 ## What makes a good scenario

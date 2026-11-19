@@ -1,5 +1,5 @@
 // One build of one repository at one commit (or commit prefix), in its own container: clone,
-// `feynman build`, and put the page in R2. The Durable Object's name is the job, so requests for
+// `tsmodel build`, and put the page in R2. The Durable Object's name is the job, so requests for
 // the same page while it builds find that build running instead of starting another.
 //
 // A build takes minutes (it checks every spec), so nobody waits for it: `start` begins it and
@@ -76,7 +76,7 @@ git rev-parse --verify --quiet "$2^{commit}" || { echo "$2 is not one commit in 
 const BUILD = `set -eu
 cd ${REPO}
 git -c advice.detachedHead=false checkout -q "$1"
-exec timeout ${BUILD_TIMEOUT_S} feynman build --out ${PAGE}`;
+exec timeout ${BUILD_TIMEOUT_S} tsmodel build --out ${PAGE}`;
 
 export class ShareBuilder extends DurableObject<ShareEnv> {
   readonly #container: Container;
@@ -150,12 +150,12 @@ export class ShareBuilder extends DurableObject<ShareEnv> {
       }
       // A prefix can name a commit built under its full id already.
       if (await this.env.SHARE_PAGES.head(pageKey(job.repository, commit))) return { ok: true, commit };
-      log("build.feynman", { commit });
+      log("build.tsmodel", { commit });
       const built = await this.#run(["/bin/sh", "-c", BUILD, "build", commit]);
       const page = await this.#read(PAGE);
       if (!page || built.exitCode > 1) {
-        log("build.feynman.failed", { commit, exitCode: built.exitCode });
-        return failure(422, `feynman build failed for ${job.repository.id} at ${commit.slice(0, 12)}`, built);
+        log("build.tsmodel.failed", { commit, exitCode: built.exitCode });
+        return failure(422, `tsmodel build failed for ${job.repository.id} at ${commit.slice(0, 12)}`, built);
       }
       await putPage(this.env.SHARE_PAGES, job.repository, commit, page);
       log("build.stored", { commit, bytes: page.byteLength, exitCode: built.exitCode });
@@ -179,7 +179,7 @@ export class ShareBuilder extends DurableObject<ShareEnv> {
       // Only HTTP and HTTPS leave, through ShareOutbound, and only to the repository's host: specs
       // run during the build, and they are code from the internet.
       enableInternet: false,
-      labels: { app: "feynman-share" },
+      labels: { app: "tsmodel-share" },
     });
     const outbound = this.#exports.ShareOutbound({ props: { host: repository.host } });
     await this.#container.interceptAllOutboundHttp(outbound);

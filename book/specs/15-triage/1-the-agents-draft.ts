@@ -3,7 +3,7 @@
 // Expected: `holdsAreKept` breaks in 6 events, with no faults (a false alarm:
 // the spec splits one SQL statement into two steps), and `paymentsEnd` breaks with one fault
 // (a real bug: the ticket is the answer to a request that a restart loses).
-import { atMost, budget, defineActor, defineCall, defineLimit, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineLimit, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /**
  * At most two faults on any path: resuming payments after a restart only matters when a

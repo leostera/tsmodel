@@ -2,7 +2,7 @@
 // says selling a seat must be possible.
 //
 // Expected: the three safety properties hold; someoneGetsASeat is never reached.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

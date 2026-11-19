@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tsmodel — a TypeScript library and CLI to model, understand, and check system behavior</title>
+    <meta name="description" content="tsmodel is a TypeScript library and CLI. Write how a system behaves as a TypeScript spec, then explore it in an interactive playground and check its rules with a bounded model checker, by hand or with a coding agent." />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+    <script>
+      document.documentElement.setAttribute(
+        "data-mode",
+        localStorage.getItem("tsmodel.mode") ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+      );
+    </script>
+  </head>
+  <body class="bg-kumo-canvas">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

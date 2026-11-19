@@ -1,0 +1,797 @@
+# Changelog
+
+What changed in each release of `@tsmodel/tsmodel`, newest first; up to 0.16.0 it was
+`@leostera/feynman`. A release that changes how specs are written has a **Migrating**
+section: what to change in a spec, before and after.
+
+## 0.17.0
+
+Feynman is now **tsmodel**. The package is `@tsmodel/tsmodel`, the command is `tsmodel`, the
+repository is [github.com/leostera/tsmodel](https://github.com/leostera/tsmodel), and the site
+is [tsmodel.leostera.dev](https://tsmodel.leostera.dev). Nothing else changed: the same specs
+give the same verdicts.
+
+### Migrating
+
+A repository set up for Feynman keeps working: tsmodel loads specs that import
+`@leostera/feynman`, reads `feynman.config.ts` when there is no `tsmodel.config.ts`, reads
+`feynman.lock` until `tsmodel lock` writes `tsmodel.lock`, and reads `feynman.*` span
+attributes as `tsmodel.*`. To move over:
+
+- `bun remove @leostera/feynman && bun add -d @tsmodel/tsmodel`, and run `tsmodel` where you
+  ran `feynman` (`bunx tsmodel check`).
+- In specs, import from `@tsmodel/tsmodel` (and `@tsmodel/tsmodel/play`,
+  `@tsmodel/tsmodel/config`) instead of `@leostera/feynman`:
+
+  ```ts
+  // before
+  import { defineSpec } from "@leostera/feynman";
+  // after
+  import { defineSpec } from "@tsmodel/tsmodel";
+  ```
+
+- Rename `feynman.config.ts` to `tsmodel.config.ts`, run `tsmodel lock` and delete
+  `feynman.lock`, and put `.tsmodel/` where `.feynman/` was in `.gitignore`: `tsmodel build`
+  writes `.tsmodel/index.html`.
+- In traced code, name spans with `tsmodel.step`, `tsmodel.instance`, `tsmodel.actor` and the
+  rest, instead of `feynman.*`.
+- The agent skill is `tsmodel`, at https://tsmodel.leostera.dev/SKILL.md.
+
+## 0.16.0
+
+Feynman now checks the system as well as the design. `feynman conform` takes a log, or a
+production trace from OpenTelemetry, Jaeger or Zipkin, and says whether it is a run of the
+spec. If it isn't, it gives the span where the system did something the spec says can't
+happen (RFD0016). Specs can also say what must be possible (`reachable`, RFD0014), and that
+messages on one connection keep their order (`ordered`, RFD0015). The search no longer
+stops at a depth bound by default. A review corrected the places where the checker claimed
+more than it knew, so some verdicts change: each change below is a wrong answer put right.
+
+### Migrating
+
+Specs need no changes. What can change for a check:
+
+- **No depth bound by default.** A spec that only finished because of the old 14-event bound
+  now runs until it has every world, or meets its state limit. That usually takes about a
+  second, and gives `~` where it used to give `✓`. A field that only grows (a log, a counter,
+  ids) is the usual cause, and `check` names it. Bound that field. If you really want a depth
+  bound, set `--depth 14`, or `check: { depth: 14 }` in `feynman.config.ts`, and expect `~`.
+- **What held only up to the depth bound reads `~`, not `✓`.** `~` doesn't fail a check, but
+  JSON consumers that read `holds` for these will now see `unfinished`.
+- **Run `feynman lock` again.** Sources whose definitions now resolve whole (see Sources)
+  read as changed once.
+
+### New
+
+- **`reachable` properties: what must be possible.** `defineProperty(id, { reachable: (w) =>
+  … })` holds when some world on some path gets there, and check shows the shortest way
+  (`--only`, or `--as-scenario` to keep it). It reads `✗ never reached` when every world was
+  explored and none gets there, and `~` when the search was cut off first. A spec that does
+  nothing keeps every safety property; these say it must do something. The TLC, NuSMV and
+  Alloy oracles agree on the shortest way there, and on never.
+- **Ordered channels.** `defineMessage(id, schema, { ordered: true })` (and `defineCall`):
+  messages one instance sends another over one connection arrive in the order they were sent.
+  A step takes only the oldest in flight; `lose` takes any, leaving the rest in order (a step
+  says `outOfOrder: true` to). `ctx.forward()` and `duplicate` refuse an ordered message. The
+  playground says what a waiting message is behind, and a scenario that delivers past one is
+  an error. New examples: `ordered-writes`, and the alternating bit protocol on an ordered
+  link, where it holds; TLC and P agree.
+- **`feynman conform`: is a log a run of the spec?** Give it a log of what the system did,
+  one JSON event per line, and it finds the run of the spec that the log is, allowing up to
+  `--gap` (4) steps the log does not show: faults, and the steps of `--unlogged` actors.
+  It judges the spec's properties along that run, as a monitor would. When no run fits,
+  it says on which line the log leaves the spec, and what the spec could have done there.
+  `--as-scenario` writes the run as a scenario. TLC's trace validation agrees on which logs
+  are runs. Chapter 15 of the book uses it to triage.
+- **`conform` reads traces: OpenTelemetry, Jaeger and Zipkin.** A span with a `feynman.step`
+  attribute is a step, and `--map map.ts` (`defineTraceMapping`) reads the spans a system
+  already has. The instance is the span's service, and the sender is found up its parents or
+  links. Clocks are not trusted: a trace is a partial order (each instance's order, causes
+  before effects), and it conforms when some order that keeps both is a run. `--order time`
+  trusts the clocks instead, and `--trace ID` picks one trace. A JSON Lines log can be a
+  partial order too, with `after`.
+- **A crash changes the calls it orphans where they are**, as the engine does, not at the end
+  of what is in flight. No verdict changes; on an ordered channel, it keeps the order.
+
+### A ✓ that was not one
+
+- **What held up to the depth bound** read `✓`, though the paths the bound cut off could break
+  it further on. It reads `~` now: "held to depth N, but paths that had not got there yet were
+  cut off". Worlds at the bound that lead nowhere new do not count as cut off.
+- **No depth bound by default.** The search goes on until it has every world, or meets its
+  state, time or memory limit, as TLC does; `--depth N` still sets one. Nearly every spec
+  finishes: of the book's specs and the examples, three never run out of worlds and stop at
+  the state limit, in about a second. The book's specs that the old default of 14 events cut
+  off read `✓` as before, now with every world behind them.
+- **`never` properties that ask a question only sometimes.** `t.some(a) && t.count(b) > 1`
+  never counts b before an a, so paths that differed only in their b were merged, and a break
+  down one of them missed. Such a property is now searched remembering whole paths (slower:
+  read each count first, then combine them).
+- **Symmetry and properties that name an instance.** `symmetric: true` is a claim about the
+  properties too. One that tells instances apart ("B never wins") was judged on one world of
+  each merged pair. Merged worlds must now agree on what they break, or the claim is refuted
+  and the search runs again without it.
+- **Inputs past the twelfth combination** were never tried. All are now.
+- **`ctx.random()`** gives each draw one value, so only one outcome was explored. What holds
+  where a step drew now reads `~`, naming the step. Make a real choice an input or two steps.
+- **Scenarios** were judged on `always` properties only. One that breaks an `everyStep` or a
+  `never` property now says so, in `run` and `check`, and is no place to search from.
+
+### A ✗ that was not one
+
+- **`never` from a scenario's end** forgot the scenario's steps, so "never more answers than
+  questions" broke on the answer to a question the scenario had asked. The scenario's steps
+  are now the start of every path from its end.
+- **A rule only a scenario shows is needed** was reported not needed (#5). A scenario that
+  breaks the property without the rule now counts. And a rule is no longer "not needed, in
+  every state" when the depth bound cut the search off: that reads `~`.
+
+### Faults
+
+- **A call made before a crash fails into nobody.** `crash` dropped the failures already in
+  flight, but a call lost after the crash still failed into the restarted process, where a
+  retry could hide a missing resume. A reset now orphans its instance's calls in flight
+  (`Delivery.orphaned`). Verdicts in the book and examples are unchanged; state counts grow
+  where a spec has both a crash and a call.
+- **A reply that is itself a call**, answering one, kept its caller's crash from orphaning it:
+  the checker took the orphaned reply and the other for one state, and a loss after the
+  crash failed into the restarted process. Found by the fuzzer; the two are apart now.
+- **A message whose one step spends a budget** was offered to that step when the budget was
+  spent, and failed there. A lone step's bound is now checked like any other's.
+
+### Sources
+
+- **A definition's extent is scanned, not guessed** (#2, #4): strings, comments and brackets
+  are told apart. Definitions that resolved to their signature alone, so a change to the
+  body never went stale, now resolve whole: wrapped TypeScript and Rust signatures, Python
+  defs and classes with wrapped headers, braces in a regex or a comment, Ruby defs. A
+  definition with a body is preferred to a call, a local variable or an overload of the same
+  name, and Go methods are found by receiver (`Server.Handle`). Sources whose extent grew
+  read as changed once: run `feynman lock` again.
+
+### CLI
+
+- `--instances` refuses an actor the spec does not have, a singleton, and a count that is not
+  a whole number, instead of ignoring it under a header that named it. `--set` refuses a
+  value of another kind than the variable starts with.
+
+### Faster
+
+- **`feynman check` on a spec with a playground file** loads it in 20 ms, not 1.2 s: the kit
+  imported every Phosphor icon and all of Kumo to use a few.
+- **Big searches.** The box office with three people: 2.6 s to 1.7 s with liveness on 389k
+  states, 0.88 s to 0.56 s with symmetry on 69k. A step's `everyStep` answer is kept by what the
+  property reads, so it runs once for each combination it can tell apart; tuples and
+  fingerprints under symmetry are worked out from the parent's.
+
+- **Faster checks.** `feynman check` over the 28 examples takes 1.3 s, from 4 s in 0.15.0; a
+  single spec about half as long (payments 628 → 259 ms), and the search 30–75% less on the
+  examples, most on liveness. What each step adds to `never` memory and fairness is cached;
+  liveness is judged on dense arrays; random runs reuse the search's work, and are skipped
+  when the search has seen every world. The CLI starts faster: the explorer's dependencies
+  load only for `dev`, `build` and `open`, and `tsc` runs alongside the first check.
+- **A mistyped option** says which, and where to look, instead of reporting a crash.
+- **Random runs still run after a symmetric search.** Skipping them when the search saw every
+  world was wrong when it had merged worlds by symmetry: it had seen one of each, and the random
+  runs are what catch a false symmetry claim the search could not refute.
+- **A new example**, `webhooks.ts`: deduplicating events by the last id seen, which a
+  duplicated event arriving late gets past. It is the first to use `duplicate`.
+- **More oracles.** The examples' liveness verdicts are checked against TLC under the same
+  fairness. Ten examples are checked against Alloy 6, which finds counterexamples by SAT over
+  traces rather than by enumerating states, eight against SPIN, an explicit-state checker in
+  C, five against NuSMV, which works on sets of states as BDDs, and six as Quint specs against
+  Apalache, which works by SMT: the same verdicts,
+  counterexamples just as short, and with SPIN and NuSMV the same number of states. NuSMV also
+  checks liveness under the same fairness, a second opinion beside TLC's.
+
+Fixes found while writing the book, *Writing specs with Feynman* (`book/` in the repository),
+which the skill now points at:
+
+- Traces print a `Set` as its members and a `Map` as its entries, not `{}`.
+- A step a scenario took is no longer reported as never ran.
+- `feynman run` marks a scenario that breaks a property with ✗, as `check` does.
+- Fault steps (`lose`, `crash`, …) no longer count as steps with no code yet.
+- The playground, left alone, no longer takes faults (a crash, a lost message): they wait to be
+  asked for, as in a scenario's `settle`.
+- The checks page no longer says "Every property holds" while some are unfinished or untested.
+- `--help` after a command prints the usage.
+- The skill names `WorldView` (and `Setup`) as the types for helpers, not `World`.
+
+## 0.15.0
+
+A smaller core (RFD0012). Feynman no longer decides how a system fails: a spec declares its
+faults, as steps from the faults library that ships with it (`lose`, `duplicate`, `crash`,
+calls whose failure reaches the caller, budgets and `atMost`). The library is built on the
+core's own primitives, so a fault the library lacks is a step you write. And there is one
+search, the integer core: the classic engine and its threads are gone.
+
+0.14.0 was tagged but never published to npm. From 0.13, apply 0.14's Migrating steps
+below, then these.
+
+### Migrating
+
+Every spec with faults changes. Without its faults declared, a spec is checked with none.
+The state counts and verdicts stay the same once they are.
+
+1. **Declare a budget, and the faults the system has**, as steps in the actor that suffers
+   them:
+
+   ```ts
+   import { budget, crash, lose } from "@leostera/feynman";
+
+   const faults = budget("faults", 1); // was --faults 1, the default
+
+   const Bank = defineActor({
+     // durable: ["seen"],                                  ← gone
+     transitions: {
+       charge: { on: Charge, … },
+       chargeLost: lose(Charge, { spend: faults }),           // the network may lose a Charge
+       crash: crash({ keeps: ["seen"], spend: faults }),       // was durable: ["seen"]
+     },
+   });
+   ```
+
+   Declare only what can happen: a message that cannot be lost gets no `lose`, a process
+   that does not restart in the spec's scope gets no `crash`. `duplicate(M, { spend })`
+   delivers a message twice.
+2. **Bound actions with `atMost`**, which replaces `--repeats` (2 by default):
+
+   ```ts
+   actions: { pay: { with: [atMost(2)], label: "Pay", … } }
+   ```
+
+   For one knob over several actions, `const repeats = defineVariable("repeats", 2)` and
+   `atMost(repeats)`; `--set repeats=3` raises them all.
+3. **Calls**: `defineCall` and `failed` keep their names and import. Losing a call fails it,
+   as before. Losing its reply fails it only when the loss says so:
+   `lose(Charged, { fails: Charge, spend: faults })`. The caller needs a step on
+   `failed(Charge)` only when a `lose` can fail the call; `defineSpec` says when it is missing.
+4. **Scenarios** take fault steps by name: `s.drop(bank, Charge)` becomes
+   `s.step(bank, "chargeLost")`, and `s.restart(bank)` becomes `s.step(bank, "crash")`.
+5. **The CLI and config**: `--faults N` becomes `--set faults=N`, and `--repeats N` an
+   `atMost` limit (or `--set repeats=N`, as above). `--workers`, `check.workers`,
+   `check.faults`, `check.repeats` and `FEYNMAN_ENGINE` are gone.
+6. **Agents and scripts**: `--json` has no `threads`, and `reductions` only `symmetric` and
+   `refuted`. A step's changes list the variables it moved: `@faults: 1 → 0`, and
+   `@Client.pay: 0 → 1` for an `atMost` count. Events carry their step's `tags`; a fault's
+   include `fault`.
+7. **Specs from 0.13 or earlier** no longer get errors saying what replaced `defineSpec`'s
+   closure, `message`, `s.wait` or a duration given to `s.settle`, or a timer's
+   `run(state, ctx)`: the 0.14 steps above, and the skill's "Bringing an older spec up to
+   date", have them.
+
+### A smaller core
+
+- **Several steps on one message**: any step on it whose `when` holds may take it. At most
+  one is fair, and the system left alone delivers to that one; the others say `fair: false`.
+- **Model variables**: `defineVariable(name, initial, { each? })` is state of the model
+  rather than of an actor. Steps list it in `uses` and read and write it with `ctx.get` and
+  `ctx.set`, guards and properties read it, and `--set name=value` starts it elsewhere
+  (`spec.setting({ … })` from code).
+- **`ctx.reset({ keeps, drops })`** starts an instance again, **`ctx.forward()`** puts the
+  message being handled back in flight, **`ctx.delivery`** says what it is and whom from,
+  and steps take **`tags`**, which the core keeps and never reads.
+- **Parts on steps**: `with: [atMost(2), spend(faults)]` folds a part's variables,
+  conditions and effects into a step.
+- **Stuck** means nothing is pending, no action is possible and no fair guard holds; an
+  exhausted `atMost` or budget does not keep a world from being stuck.
+- **Settling**, in scenarios and the playground's Play, fires only fair guards.
+
+### Checking
+
+- One search, the integer core (RFD0008). The classic engine, its sleep sets and its
+  worker threads are deleted; threads come back when the integer core runs in parallel.
+- Under symmetry, `atMost` counts are renamed with their instance: fewer states (or-set:
+  19,849, from 27,986).
+- Specs without faults check as fast as in 0.14; specs with many fault steps are 5–25%
+  slower, measured on the examples.
+
+## 0.14.0
+
+A spec is made of parts (RFD0011). Messages, calls, zones, actors, rules, properties and
+scenarios are values defined at the top level of the file, and `defineSpec` puts them
+together. Parts name each other by value, never by a string, so the editor and the checker
+follow every reference, and a spec reads top to bottom with no closure around it.
+
+### Migrating
+
+Every spec changes. Rewrite it in this order; the state counts and verdicts stay the same.
+
+1. **Messages** move out of `defineSpec` and get a schema, the payload's type as a value:
+
+   ```ts
+   // Before
+   messages: { Charge: call<{ payment: string }>({ name: "charge", over: "rpc" }), Charged: message<{ payment: string }>({ name: "charged", tone: "reply" }) }
+   // After
+   const Charge = defineCall("Charge", { payment: String }, { over: "rpc" });
+   const Charged = defineMessage("Charged", { payment: String }, { tone: "reply" });
+   ```
+
+   The id is the first argument, and the name defaults to it in words ("Charge" is
+   "charge"); keep `name` only where it says more. Schemas: `String`, `Number`, `Boolean`,
+   nested objects, `oneOf(…)`, `listOf(S)`, `setOf(S)`, `recordOf(S)`, `nullable(S)`, and
+   `type<T>()` for a type the checker does not look inside. Every payload sent is checked
+   against its schema.
+2. **`spec.defineX` becomes `defineX`**, at the top level. Rules, properties and scenarios
+   take their name or id first, and properties are one each:
+
+   ```ts
+   // Before
+   const cap = spec.defineRule({ name: "cap", description: "…" });
+   spec.defineProperties({ belowThree: { description: "…", always: (w) => …, needs: [cap] } });
+   spec.defineScenario({ name: "A payment", run(s) { … } });
+   // After
+   const cap = defineRule("cap", { description: "…" });
+   const belowThree = defineProperty("belowThree", { description: "…", always: (w) => …, needs: [cap] });
+   const aPayment = defineScenario("A payment", { run(s) { … } });
+   ```
+
+   `spec.defineInput` is `input`, and `spec.defineZone`, `defineLimit` and `defineGroup`
+   take what they took.
+3. **Steps are named, and say what they are on**:
+
+   ```ts
+   // Before
+   transitions: { [Charge]: { description: "…", run(state, msg, ctx) { … } }, [spec.failed(Charge)]: { … } }
+   // After
+   transitions: { charge: { on: Charge, description: "…", run(state, msg, ctx) { … } }, chargeFailed: { on: failed(Charge), … } }
+   ```
+
+   An actor has one step per message. A timer's or a guard's `run(state, ctx)` becomes
+   `run(state, _, ctx)`: every step's run takes the same three arguments.
+4. **Scenarios and traces name messages by value**: `s.deliver(bank, Charge)`,
+   `s.drop(client, Charged)`, `s.deliver(client, failed(Charge))`, `e.sent(Charge)`;
+   `e.is(Actor, "step")` takes the step's new name.
+5. **`defineSpec` takes the parts**, and the closure's `return { …actors }` goes:
+
+   ```ts
+   export default defineSpec({
+     name: "Retried call",
+     actors: [Client, Bank],
+     properties: [chargedOnce, paymentsEnd],
+     finalState: { description: "The order is paid.", when: (w) => w.the(Client).state.paid }, // was spec.defineFinalState
+     scenarios: [aPayment, theAnswerIsLost],
+   });
+   ```
+
+   Messages, zones and rules are found from the actors and properties that use them;
+   `groups`, `limits`, and `rules` no property needs yet, are listed.
+6. **Playground files** import the actors they name from the spec, which exports them:
+   `import spec, { Person } from "./remote-access.ts"` in place of `spec.handles.Person`.
+7. **Agents and scripts:** `--json`'s `step` is the step's name (`charge`), not its key
+   (`message:Charge`); `--as-scenario` writes `defineScenario("…", { … })` with messages by
+   value.
+
+The skill's "Bringing an older spec up to date" has the same steps for an agent.
+
+### Specs from parts
+
+- `defineSpec` says when the parts do not fit, before anything runs: two parts with one
+  id, a message sent that no actor has a step on, two steps on one message, a call whose
+  sender has no step on `failed(Call)`, an actor named in a group that is not in `actors`.
+- `feynman check` warns of a step on a message no step sends: it never runs.
+- A payload that does not match its schema fails the step that sends it, saying what is
+  wrong: `socket: "1", but its schema says number`.
+- `rule.on` reads which rules are off in the spec running, so `--without` no longer builds
+  the spec again.
+- Typed helpers take `(state: State, ctx: Ctx)`, and `SetupWorld` types a setup shared by
+  scenarios.
+
+### Fixes
+
+- A spec loaded by the CLI imports the Feynman the CLI runs, rather than a copy bundled
+  into it: smaller bundles, and one DSL for the spec and the engine.
+- An error loading a spec (a missing export, a syntax error) is reported as such, not as a
+  crash in Feynman to report upstream.
+
+## 0.13.0
+
+### Migrating
+
+Specs need no change: everything here is new, or the checker reporting more. A few things
+behave differently around them:
+
+- **`feynman run` with several scenarios prints one line each**, not every trace. A script
+  or an agent that read the traces from it needs `--all`, or `--scenario NAME` for one.
+- **A search may stop at the memory limit**, 50% of the machine's memory by default, where it
+  used to run on (and was often killed). Raise it with `--memory-limit GB`, or
+  `check.memoryLimit` (in megabytes) in `feynman.config.ts`. `--json`'s `stoppedBy` can now
+  be `"memoryLimit"`, and the line under an unfinished verdict reads differently: match on
+  `--json`, not on that text.
+- **Code that builds a `Spec` by hand** (not with `defineSpec`) must add `rules: []`,
+  `without: []` and `withoutRules`. Spreading a spec (`{ ...spec, properties }`) keeps them.
+- **Types come from `dist/types`.** A project that type-checks its specs now checks them
+  against declaration files, not Feynman's source, and needs no `allowImportingTsExtensions`
+  for it. Nothing to change, unless a `paths` entry pointed `@leostera/feynman` at its `src/`.
+- **Adopting rules:** a constant flipped by hand to see a property break (`const
+  PENDING_RULE = true`), or a copy of the spec without a safeguard, becomes a rule:
+
+  ```ts
+  // Before
+  const PENDING_RULE = true;
+  if (PENDING_RULE && state.pending.length) return void state.waiting.push(msg);
+
+  // After
+  const pendingRule = spec.defineRule({ name: "pendingRule", description: "A read waits behind an unconfirmed push." });
+  if (pendingRule.on && state.pending.length) return void state.waiting.push(msg);
+  // and on the properties it protects:
+  ackedPushesAreVisible: { description: "…", always: (w) => …, needs: [pendingRule] },
+  ```
+
+  Then `feynman check` proves the rule is needed, and `--without pendingRule` replaces the
+  copy.
+
+### Rules that are needed
+
+- A spec can name the rules of its design, the parts that exist to keep a property true
+  (RFD0010): `const key = spec.defineRule({ name: "idempotencyKey", description: "…" })`,
+  read as `key.on` where it applies. A property that depends on it says `needs: [key]`, a
+  reference the type checker follows, not a string.
+- `feynman check` also checks the design without each rule, and expects every property that
+  needs it to break: `✓ idempotencyKey  needed: without it, chargedOnce breaks (5 events)`.
+  When one still holds, the check fails (`✗`): the rule does nothing, or the property is too
+  weak to see what it prevents. That search stops as soon as every such property broke.
+  `--no-rules` skips it; `--json` and the explorer's Checks panel show the verdicts.
+- `feynman check --without RULE` (and `feynman run --without RULE`) look at the design
+  without a rule, with its counterexamples and `--as-scenario`: no more copying a spec to
+  flip a flag. The retried-call example declares its idempotency key as a rule.
+
+### When a search does not finish
+
+- A search stopped by a limit says how far it got in full: a safety property that held "held
+  on every path of up to 6 event(s)", rather than "in the 300,000 states explored". `--json`
+  gives `heldUpTo`.
+- It also says what its states differ in, most first: "Session.outcomes (1,359 values),
+  HostDO.sockets (46 values) …; up to 7 message(s) in flight at once", and whether to bound a
+  growing field or cut the orders in flight. `--json` gives `variety` and `mostInFlight`.
+- A memory limit: the search stops past `--memory-limit GB` (`check.memoryLimit`, in
+  megabytes; 50% of the machine's memory by default) and keeps its verdicts, instead of being
+  killed by the system with nothing reported.
+
+### Using Feynman from a project
+
+- The package ships declaration files (`dist/types`), so a project that type-checks its specs
+  with its own `tsconfig` no longer type-checks Feynman's source (TS5097 without
+  `allowImportingTsExtensions`, errors under `noUncheckedIndexedAccess`).
+- `feynman run` with several scenarios prints how each ended, a line each; `--scenario NAME`
+  or `--all` print traces.
+- APIs from before time became the order of events say what replaced them: `s.wait`,
+  `s.settle(duration)`, and type errors on `ctx.now` and `ctx.clock`.
+
+### Fixes
+
+- A spec with `symmetric: true` actors that answers a call crashed the check with "JSON Parse
+  error: Unrecognized token '|'" (new in 0.12.0): a reply to a call is now keyed so symmetry
+  can rename it.
+- When Feynman itself crashes (a JavaScript error thrown from its own source), it says so,
+  shows where, and asks for a report, instead of printing the bare message.
+
+## 0.12.0
+
+### Calls that fail
+
+- `call<P>({ name })` declares a message whose failure reaches its caller, as an RPC, a
+  `fetch` or a Durable Object stub throws (RFD0009). The checker can lose it, or the reply
+  its handler sends with `ctx.reply`, and either way the caller gets the call's failure:
+  `[spec.failed(Charge)]: { run(state, failure, ctx) { … } }`, with `failure.payload` and
+  `failure.to`. The caller cannot tell which was lost, so a retry after a lost reply runs the
+  call twice: the duplicates a silent loss never reaches.
+  - A failure costs one fault, as a loss does, and it cannot be lost itself. A restart of the
+    caller drops the failures on their way to it.
+  - An actor that sends a call must handle its failure, a call has one reply, and that reply
+    is not a call: each is an error.
+  - Scenarios deliver a failure by the call's name: `s.deliver(client, "failed:Charge")`.
+    In the playground, "Fail the call" replaces "Lose it" on a call and on its reply.
+- A new example, `retried-call.ts`: a client that retries a payment when the call to the bank
+  fails charges twice when the answer is lost, and an idempotency key fixes it. TLC and P
+  agree with the checker on it.
+
+### Checking
+
+- A counterexample that ends with someone waiting on a lost message (a liveness verdict where
+  nothing fair can happen, or a stuck world) says who waits for what, and what to model
+  instead: a `call` when the code is told (an RPC or fetch that throws), otherwise a timer
+  that retries; `--faults 0` if it cannot be lost. It is a finding, not a reason to weaken
+  the property or call every quiet world final.
+- Type errors are said again at the end of `feynman check`'s report, so its last lines (a
+  `tail`) show that the results come from code that does not compile.
+
+### Writing specs
+
+- A timer or guarded transition whose `run` takes a message, `run(state, msg, ctx)`, is an
+  error when the spec is defined: it receives no message, and its run is `(state, ctx)`. It
+  used to fail when it first ran, on `ctx` being undefined.
+- The skill: calls, why a final state of `w.quiet` alone hides deadlocks, and pointing
+  sources at methods rather than classes.
+
+### Fixes
+
+- A source naming a generic function or method is found: `src/client.ts#Client.call` for
+  `async call<M extends Keys<T>>(…)`, and `#wrap` for `const wrap = <T,>(value: T) => …`.
+  Type parameters nested inside a function's own type parameters used to hide it ("is not
+  defined"), and the "did you mean" list came up empty too.
+
+## 0.11.0
+
+### Checking
+
+- The search runs on an integer core (`src/check/integer.ts`; RFD0008).
+  - **Worlds** are short integer vectors of interned instance states, messages and timers.
+  - **Local steps** (one instance, in one state, taking one step, with one argument) run
+    through the engine once, and are then replayed from a cache.
+  - **Fingerprints** are updated per step. Only fingerprints and parent links are kept, so
+    counterexamples are replayed on real worlds.
+- It is 5–13× faster than the old search on one thread, and 2–6× faster than the old search
+  on 8 threads. It uses a quarter or less of the memory.
+  - On a production spec of 2.8 million states, a check that took 581 s on one thread (147 s
+    on 8) now takes 40 s.
+  - The same spec needs 11 GB at peak, down from 38 GB.
+- It does everything the old search did except split the work among threads:
+  - every kind of property: `always`, `never`, `everyStep`, and liveness on the graph it
+    keeps;
+  - symmetry and its twin checks;
+  - scenario starts, including ones whose setup spawns instances;
+  - errors, stuck worlds, coverage, `maxStates` and `timeLimit`.
+- Its reports are the same as the old search's, down to every counterexample and loop, on
+  every example and on generated specs. The TLA+ and P oracles hold it to TLC and P.
+- A property's answer is worked out once for each set of instance states it can see, and
+  then reused. Most states differ only in what is in flight, so specs with costly properties
+  gain the most.
+- With symmetry on, checks are 3–7.6× faster than before.
+
+### API
+
+- `check(spec, bounds, seeds, { engine })` takes `"integer"` (the default) or `"classic"`,
+  the old search. `FEYNMAN_ENGINE=classic` sets the default, for example to run a suite
+  through the old search.
+- `bounds.reduce` (sleep sets and the inputs reduction) and `--workers` / `bounds.workers`
+  now apply only to the classic search. `report.reductions.orders` and `.inputs` are 0 with
+  the integer core.
+
+### Fixes
+
+- `feynman check` no longer says "skipped 0 step(s)" when only symmetry has something to
+  report.
+- The fuzzer now holds the integer core to the old search, from scenario starts too.
+  Generated specs may now spawn instances in a scenario's setup.
+
+## 0.10.0
+
+### Writing specs
+
+- A scenario can start in a world it sets up, rather than replaying how the system got
+  there: `setup(w) { w.set(Ledger, { … }); w.spawn(Git, "Alice", { … }) }`. Fields are laid
+  over each instance's `initialState`, and typed against its state. The flow and the
+  playground start after it; the checker explores from it as well as from where the scenario
+  ends, and reports a property the set-up world breaks against the scenario. `--as-scenario`
+  writes a counterexample found from a scenario's world as a `setup`, when nothing is in
+  flight there. Counterexamples say where they start, `{ scenario, at: "start" | "end" }`
+  in `--json`. Two scenarios with one name are an error.
+- `s.settle({ until: (w) => … })` runs a scenario left alone until the world gets there, to
+  step in at that moment (a restart, a drop) without delivering each message by hand. It is
+  an error if the system settles first.
+- An unfinished liveness verdict says why and what to change: "held to depth 14, but paths
+  that had not got there yet were cut off at that depth", then "raise --depth
+  (check.depth in feynman.config.ts)". When the search stopped at a limit, it names that limit.
+- A step whose `run` returns a new state object, or is `async`, is a spec error: state
+  changes in place, and the returned state used to be dropped silently.
+- An actor without a `zone` says so, instead of failing on `raw.zone.name`.
+- `feynman version` (and `--version`, `-v`).
+- The skill: how scenarios change state (only through events) and how to share setup
+  between them; zones for the system's parts and concerns, and when to use a ring or a grid;
+  the shipped source as the API reference.
+
+### Migrating
+
+- An actor's `look` is now `display`, and the `Look` type is `Display`:
+  `display: { icon: "server", status: (s) => …, rows: (s) => … }`. Playground files
+  receive `display` where they received `look`.
+- `--json` counterexamples say where they start as `from: { scenario, at: "start" | "end" }`
+  rather than a scenario name.
+- Two scenarios with one name are an error.
+
+### Fixes, found by fuzzing
+
+- A world where a path starts (the initial world, or where a scenario ends) is judged too: an
+  `always` property it breaks is reported with no steps, as TLC does, not one step later or
+  not at all.
+- Liveness verdicts no longer depend on `never` properties. What a `never` property remembers
+  of the path made a loop come back to a different state each time round, so liveness
+  counterexamples through it could not close and the verdict was "unfinished". A spec with
+  both is now checked in two searches; the safety one keeps its reductions.
+- A step that fails (a spec error) breaks no property: the error is the finding. Random runs
+  and the search disagreed on this before.
+- Worker threads could fail to find the spec's bundle (Bun's resolver, when several threads
+  import a new file at once); each bundle gets a directory of its own.
+
+### Faster
+
+- About 1.5× faster on one thread: states are written and copied without
+  `JSON.stringify` replacers or `structuredClone`, and fingerprinted from cached hashes of
+  their parts. or-set with a fault (129k states): 6.8 s at 0.9.0, 4.4 s on one thread now,
+  1.5 s on 8.
+
+## 0.9.0
+
+### Liveness, as in TLA+
+
+- New liveness properties: `eventually`, `leadsTo: { whenever, then }`, `infinitelyOften`
+  and `eventuallyAlways`. They hold in every fair behaviour, as in TLA+, not on one run of
+  the system left alone. Messages, timers and guards are weakly fair; a step can say
+  `fair: "strong"` or `fair: false`. Actions and faults are never fair.
+- A liveness counterexample is a path and then a loop it repeats forever, shown by check,
+  `--json` (`loop`), `--as-scenario` and the playground. Where a loop could lie past the
+  depth bound, the verdict is unfinished.
+- `everyStep: (before, after, event) => boolean` judges each step.
+- Stuck worlds: where nothing can happen, check reports it and fails, unless the spec calls
+  that world final with `spec.defineFinalState({ description, when })`.
+- Sets and maps in state are compared by what they hold.
+- `--symmetry-checks N` (or `check: { symmetryChecks }` in the config): how many merged
+  states a symmetry claim is tested on, 2000 by default; 0 trusts it. The tests take a large
+  share of a symmetric search.
+- Checking is about 3× faster on symmetric specs: renamed state keys are cached.
+
+### A search shared among threads
+
+- Big searches run on worker threads besides the main thread (RFD0007): 1.9–2.9× faster from
+  20,000 states up, with the same result, down to the counterexamples, however many threads
+  there are. `--workers N` (or `check: { workers }`) sets how many, one fewer than the cores
+  by default, up to 7; 0 keeps the search on one thread. Small searches stay on one thread.
+- States are remembered by 64-bit fingerprints, as TLC does: two states share one with odds
+  of about one in 36 million at a million states.
+- The state count is of distinct states only.
+
+### Migrating
+
+- `spec.defineInvariants` is now `spec.defineProperties`.
+- `eventually` with `after` becomes `leadsTo`:
+
+  ```ts
+  // before
+  settles: { description, after: (w) => pending(w), eventually: (w) => !pending(w) },
+  // after
+  settles: { description, leadsTo: { whenever: (w) => pending(w), then: (w) => !pending(w) } },
+  ```
+
+- A spec whose system finishes adds `spec.defineFinalState` for where it ends; otherwise
+  check reports its end as stuck.
+
+## 0.8.0
+
+### Reading check's results
+
+- `feynman check --brief` prints one line per property, and for each counterexample its
+  length and the faults it needs, without the trace.
+- `--only P,Q` checks and shows only those properties.
+- `--json` prints the whole result as JSON: verdicts, counterexamples with their events,
+  scenario failures, sources.
+- `--only P --as-scenario` prints P's counterexample as `spec.defineScenario` code that
+  replays it step by step.
+
+### Telling likely bugs from unlikely ones
+
+- Each counterexample uses the fewest faults (lost messages, restarts) that break the
+  property within the bounds. Check searches again with fewer faults to find it, and says
+  when a shorter path needs more: "needs no faults" means it happens in normal operation.
+- A property can be marked `known: "why, or the issue"`: a bug found and not fixed yet.
+  Check reports it, and scenarios that break it, without failing; once it holds, check
+  fails until the mark is removed.
+
+### Scenarios
+
+- `s.deliver(who, message, payload?)` delivers a message in flight now, ahead of the rest;
+  `s.drop(who, message, payload?)` loses one; `s.step(who, transition)` runs a guarded
+  transition. With them a scenario can take any path the checker can.
+
+### Sources
+
+- A `path#symbol` that is not defined names the close symbols the file does define: "did
+  you mean src/relay.ts#Relay.redeem?"
+
+### Build
+
+- `feynman build` minifies the explorer and the spec modules, and writes `.gz` and `.br`
+  variants next to the page for static hosts.
+- `--out` takes a directory too (one that exists, or a path ending in `/`), and writes
+  `index.html` in it.
+
+### Skill
+
+- When a counterexample appears: sort it into spec mistake, intended behaviour or finding,
+  judge how likely a finding is from the faults it needs and production evidence, and keep
+  one that stays as `known`.
+- Write more specs rather than bigger ones.
+
+## 0.7.0
+
+### Examples
+
+Six coordination systems, each buggy and fixed, with verdicts worked out by hand and
+independent TLA+ and P models that agree with the checker:
+
+- `write-skew.ts`: two on-call doctors each check that the other stays, then both leave.
+- `dining-philosophers.ts`: each philosopher starts with a different fork; deadlock.
+- `ricart-agrawala.ts`: equal timestamps let both nodes into the critical section. Writing
+  the fix, the checker found two more ways in once nodes restart: a clock that goes back,
+  and an answer to an old request counted for a new one.
+- `token-ring.ts`: a resent token crossing a slow first copy gives two holders.
+- `chang-roberts.ts`: leading on beating a smaller id, rather than on one's own id coming
+  back round, elects two leaders.
+- `barrier.ts`: a coordinator counting arrivals, not workers, opens early when one restarts
+  and arrives again.
+
+## 0.6.0
+
+### Fixed
+
+- `feynman dev` starts on a port that is free on both loopback addresses. `localhost` is
+  `::1` and `127.0.0.1`, and a second `feynman dev` used to bind the one the first had left
+  and report the same port.
+
+### Examples
+
+- Three new systems, each buggy and fixed, with verdicts worked out by hand and independent
+  TLA+ and P models:
+  - `alternating-bit.ts`: the alternating bit protocol over a network that reorders. One bit
+    is enough only on a link that keeps order; a retry's stale copy passes for the next item.
+  - `raft-vote.ts`: a node that forgets its vote on restart votes twice in a term, and two
+    nodes lead.
+  - `outbox.ts`: an announcement queued in memory is lost when the shop restarts between
+    storing an order and announcing it.
+- The lease lock gains TLA+ and P models.
+- Every example and its oracles are one entry in `test/examples/corpus.ts`.
+- The TLC oracles run again: they had been comparing against nothing on machines whose
+  `java` is the macOS stub. A TLC error other than a violation now fails the oracle rather
+  than passing for "holds".
+
+## 0.5.0
+
+### Changed
+
+- The playground plays by itself by default, at ¼× speed.
+- The play bar is bigger, with Play/Pause standing out.
+
+## 0.4.0
+
+### Added
+
+- The playground lays the diagram out top to bottom when the room beside the side pane is
+  narrow. A button by the zoom controls picks auto, left to right, or top to bottom; the
+  choice is kept in the URL (`?layout=`).
+- `feynman build` reports every phase of every spec, timed: bundles and their sizes,
+  sources (naming missing ones), call traces and their problems, functions, and the check's
+  verdict.
+
+### Changed
+
+- Browser modules are bundled with Vite; Bun only bundles specs the CLI runs.
+
+### Fixed
+
+- The diagram fits beside the floating controls instead of under them.
+- A crash when a pan ended before React applied its last move.
+
+## 0.3.0
+
+### Added
+
+- A Code view of the timeline: each event's inputs and messages, the code its sources point
+  at, and the functions that code reaches, all highlighted.
+- Shareable playground URLs: `#/playground/<spec>/<scenario>`, with speed, camera and custom
+  state.
+- Copy Timeline and Copy Scenario.
+
+### Changed
+
+- `feynman dev` runs on Vite's dev server, and checks and call trees run on a worker so the
+  page stays responsive while they finish.
+
+## 0.2.0
+
+The first release on npm as `@leostera/feynman`.
+
+- Specs have no clock: time is the order of events (RFD0004).
+- `feynman build` writes the explorer as one self-contained HTML file.
+- The explorer: a playground that plays the system and waits when it cannot go on, flows as
+  a tree of specs, scenarios and flows, a settings page (theme, auto-play, reduced motion),
+  and zones that arrange their instances in a stack, row, grid or ring.

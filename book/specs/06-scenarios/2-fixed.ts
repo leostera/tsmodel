@@ -1,7 +1,7 @@
 // Chapter 6, step 2: the race, after the fix; and the last seat, set up rather than replayed.
 //
 // Expected: every property holds, and every scenario runs as described.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

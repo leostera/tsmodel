@@ -1,7 +1,7 @@
 // Chapter 5, step 4: the database refuses a seat that is taken.
 //
 // Expected: every property holds. `noMoreTicketsThanSeats`, which only counts, is gone.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

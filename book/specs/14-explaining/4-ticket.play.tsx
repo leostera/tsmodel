@@ -1,6 +1,6 @@
 // Chapter 14, step 4: what the derived playground can't show by itself. The ticket is drawn
 // as a ticket, and the bank opens a card statement beside its node once it has charged.
-import { Card, definePlayground, Panel, Ticket } from "@leostera/feynman/play";
+import { Card, definePlayground, Panel, Ticket } from "@tsmodel/tsmodel/play";
 import spec, { Bank, BoxOffice, Person } from "./4-ticket.ts";
 
 export default definePlayground(spec, (play) => {

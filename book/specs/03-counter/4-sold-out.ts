@@ -2,7 +2,7 @@
 //
 // Expected: no properties yet. Check type-checks the spec, runs the scenario, and explores
 // every order of sales: nothing sold, A1, A2, both. A sold-out show is final.
-import { defineActor, defineScenario, defineSpec, defineZone, input, oneOf } from "@leostera/feynman";
+import { defineActor, defineScenario, defineSpec, defineZone, input, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

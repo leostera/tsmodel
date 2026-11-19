@@ -10,7 +10,7 @@
 
 ## Summary
 
-A spec is versioned with the code, so two commits give two specs, and everything Feynman
+A spec is versioned with the code, so two commits give two specs, and everything tsmodel
 derives from a spec can be compared. This RFD proposes what a comparison shows and in what
 order: first a short account of what changed in the system's behaviour, then the evidence
 for each part of it, from the rules that broke down to the steps and the code. It is a
@@ -18,7 +18,7 @@ first pass at the design, meant to settle what to build before the views are red
 
 ## Motivation
 
-`feynman diff --base main` and the flows page compare each scenario's trace with the same
+`tsmodel diff --base main` and the flows page compare each scenario's trace with the same
 scenario at another commit, step by step. That answers "did this story change?", but not
 the questions people bring to a change:
 
@@ -43,7 +43,7 @@ ordering within bounds. A comparison built only on scenarios misses most of what
 
 ## Non-goals
 
-- Diffing code. CallDiff and the forge already do that; Feynman links to it.
+- Diffing code. CallDiff and the forge already do that; tsmodel links to it.
 - Comparing specs of different systems, or detecting renames cleverly in a first version.
 
 ## Guide-level explanation
@@ -86,7 +86,7 @@ The system map can carry the same information: actors and links added (green), r
 
 ### History
 
-`feynman log [spec]` walks the commits that changed a spec or the code its sources point at,
+`tsmodel log [spec]` walks the commits that changed a spec or the code its sources point at,
 and prints each one's summary, newest first. The view gets a history page with the same, so
 "how did pairing get to how it is now" is a scroll down a list of summaries.
 
@@ -98,8 +98,8 @@ and prints each one's summary, newest first. The view gets a history page with t
 - `src/check`: an abstraction of an exploration, `Footprint` (layer 4), recorded as the
   search runs, and `diffFootprints`. Verdict comparison (layer 1) uses the two reports.
 - `src/code`: changed sources between commits (layer 5; the lock already hashes them).
-- `src/cli`: `feynman diff` gains the summary and `--format markdown` for a PR comment;
-  `feynman log` is new. Both build the base spec from a worktree, as `diff` does today.
+- `src/cli`: `tsmodel diff` gains the summary and `--format markdown` for a PR comment;
+  `tsmodel log` is new. Both build the base spec from a worktree, as `diff` does today.
 - `src/view`: a comparison page that leads with the summary; the flows page redesign
   builds on it.
 
@@ -129,7 +129,7 @@ The summary is the list of `Change`s, sorted by weight, the first few as sentenc
 
 ### Compatibility and migration
 
-`feynman diff` keeps its output as a section under the summary. Nothing in specs changes.
+`tsmodel diff` keeps its output as a section under the summary. Nothing in specs changes.
 
 ### Rollout and validation
 
@@ -185,7 +185,7 @@ Keep per-scenario trace diffs, and leave reviewers to assemble the story.
 - Which footprint is small enough to diff and still catch real changes? The examples'
   buggy/fixed pairs should decide.
 - Where does history live: computed on demand from git, or recorded per commit (a
-  `.feynman/history` the CLI appends to)?
+  `.tsmodel/history` the CLI appends to)?
 
 ### During implementation
 
@@ -199,5 +199,5 @@ Keep per-scenario trace diffs, and leave reviewers to assemble the story.
 ## Future possibilities
 
 - A PR bot that posts the summary and a link to the built comparison page.
-- On feynman.leostera.dev, a history for every published simulator.
+- On tsmodel.leostera.dev, a history for every published simulator.
 - With RFD0004, traces are pure event sequences, which makes layer 3 cleaner.

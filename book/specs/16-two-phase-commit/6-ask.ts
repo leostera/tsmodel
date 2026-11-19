@@ -1,7 +1,7 @@
 // Chapter 16, step 6: a service in doubt asks the coordinator, again and again.
 //
 // Expected: `atomic` and `nobodyWaitsForever` hold, with one lost message.
-import { atMost, budget, defineCall, failed, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@leostera/feynman";
+import { atMost, budget, defineCall, failed, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

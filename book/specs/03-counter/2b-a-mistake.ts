@@ -1,7 +1,7 @@
 // Chapter 3, a mistake: a step that returns a new state instead of changing its own.
 //
 // Expected: a spec error on the first sale.
-import { defineActor, defineSpec, defineZone } from "@leostera/feynman";
+import { defineActor, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const theatre = defineZone({ name: "Theatre", description: "the box office at the door" });
 

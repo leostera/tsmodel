@@ -1,7 +1,7 @@
 // Chapter 8, step 1: the box office charges the card through the bank.
 //
 // Expected: both properties hold. No message is ever lost: the spec declares no faults.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 /** The last seat, and the order a hold opens: a payment is for one order. */
 type Seat = { kind: "free" } | { kind: "held"; by: string; order: string } | { kind: "paying"; by: string; order: string } | { kind: "sold"; to: string };

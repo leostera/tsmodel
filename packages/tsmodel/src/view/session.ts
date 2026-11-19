@@ -1,0 +1,259 @@
+// A playground session: the world at the start, the steps taken since, and the operations
+// that produced them, so a session survives reloads by replaying its operations against
+// the (possibly edited) spec.
+import { act, actorNamed, instanceById, scenarioStart, fire, guard, pendingInOrder, spawn, startWorld, emptyWorld, choices, type Event, type Run, type Spec, type World } from "../spec/index.ts";
+import { sortedJson } from "../spec/json.ts";
+
+/** What a person did in the playground. */
+export type Op =
+  | { op: "spawn"; actor: string; label: string }
+  | { op: "act"; instance: string; key: string; inputs: Record<string, unknown> }
+  /** A pending entry taken: by `step`, one of the steps on a message; without, the one left alone. */
+  | { op: "fire"; pending: number; step?: string }
+  | { op: "guard"; instance: string; key: string };
+
+/** Parse JSON from a shared URL into operations the session runner understands. */
+export function parseOps(value: unknown): Op[] | null {
+  if (!Array.isArray(value)) return null;
+  const parsed: Op[] = [];
+  for (const candidate of value) {
+    if (!isRecord(candidate) || typeof candidate.op !== "string") return null;
+    switch (candidate.op) {
+      case "spawn":
+        if (typeof candidate.actor !== "string" || typeof candidate.label !== "string") return null;
+        parsed.push({ op: "spawn", actor: candidate.actor, label: candidate.label });
+        break;
+      case "act":
+        if (typeof candidate.instance !== "string" || typeof candidate.key !== "string" || !isRecord(candidate.inputs) || !isJsonValue(candidate.inputs)) return null;
+        parsed.push({ op: "act", instance: candidate.instance, key: candidate.key, inputs: candidate.inputs });
+        break;
+      case "fire": {
+        if (typeof candidate.pending !== "number" || !Number.isSafeInteger(candidate.pending) || candidate.pending < 0) return null;
+        if (candidate.step !== undefined && typeof candidate.step !== "string") return null;
+        parsed.push({ op: "fire", pending: candidate.pending, ...(typeof candidate.step === "string" ? { step: candidate.step } : {}) });
+        break;
+      }
+      case "guard":
+        if (typeof candidate.instance !== "string" || typeof candidate.key !== "string") return null;
+        parsed.push({ op: "guard", instance: candidate.instance, key: candidate.key });
+        break;
+      default:
+        return null;
+    }
+  }
+  return parsed;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return true;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (Array.isArray(value)) return value.every(isJsonValue);
+  return isRecord(value) && Object.values(value).every(isJsonValue);
+}
+
+export interface Step {
+  event: Event | null;
+  world: World;
+}
+
+export interface Session {
+  initial: World;
+  steps: Step[];
+  /** Null only when a trace contains steps that cannot be represented as playground operations. */
+  ops: Op[] | null;
+  /** Where the session came from, for the timeline header. */
+  origin: string;
+}
+
+export function freshSession(spec: Spec): Session {
+  const steps = startWorld(spec);
+  return { initial: steps.at(-1)?.world ?? emptyWorld(), steps: [], ops: [], origin: "New scenario" };
+}
+
+export function sessionFromRun(run: Pick<Run, "initial" | "events" | "worlds">, origin: string): Session {
+  return { initial: run.initial, steps: run.events.map((event, i) => ({ event, world: run.worlds[i] })), ops: operationsFromRun(run), origin };
+}
+
+/** Reconstruct the operations behind a trace, so scenarios remain replayable and shareable. */
+function operationsFromRun(run: Pick<Run, "initial" | "events" | "worlds">): Op[] | null {
+  let before = run.initial;
+  const operations: Op[] = [];
+  for (const [index, event] of run.events.entries()) {
+    let operation: Op | null = null;
+    switch (event.kind) {
+      case "spawn": {
+        const instance = run.worlds[index]?.instances.find((item) => item.id === event.instance);
+        if (instance) operation = { op: "spawn", actor: instance.actor, label: instance.label };
+        break;
+      }
+      case "action":
+        operation = { op: "act", instance: event.instance, key: event.key, inputs: event.inputs ?? {} };
+        break;
+      case "guard":
+        operation = { op: "guard", instance: event.instance, key: event.key };
+        break;
+      case "deliver": {
+        const pending = before.pending.find((item) => item.kind === "deliver" && item.to === event.instance && item.message === event.message && item.from === event.from && sortedJson(item.payload) === sortedJson(event.payload));
+        if (pending) operation = { op: "fire", pending: pending.id, step: event.key };
+        break;
+      }
+      case "timer": {
+        const pending = before.pending.find((item) => item.kind === "timer" && item.to === event.instance && item.timer === event.key);
+        if (pending) operation = { op: "fire", pending: pending.id };
+        break;
+      }
+    }
+    if (!operation) return null;
+    operations.push(operation);
+    before = run.worlds[index];
+  }
+  return operations;
+}
+
+/** A prompt-ready, readable trace for asking an agent to add a matching spec scenario. */
+export function scenarioDump(spec: Spec, session: Session): unknown {
+  const operations: Record<string, unknown>[] = [];
+  let before = session.initial;
+  for (const [index, op] of (session.ops ?? []).entries()) {
+    const actorFor = (id: string) => before.instances.find((instance) => instance.id === id);
+    switch (op.op) {
+      case "spawn":
+        operations.push({ operation: "spawn", actor: op.actor, label: op.label });
+        break;
+      case "act": {
+        const instance = actorFor(op.instance);
+        const action = spec.actors.find((actor) => actor.name === instance?.actor)?.actions[op.key];
+        operations.push({ operation: "act", actor: instance?.actor, instance: instance?.label ?? op.instance, action: action?.label ?? op.key, key: op.key, inputs: op.inputs });
+        break;
+      }
+      case "guard": {
+        const instance = actorFor(op.instance);
+        operations.push({ operation: "guard", actor: instance?.actor, instance: instance?.label ?? op.instance, transition: op.key });
+        break;
+      }
+      case "fire": {
+        const pending = before.pending.find((item) => item.id === op.pending);
+        if (pending?.kind === "deliver") {
+          operations.push({ operation: op.op, from: actorFor(pending.from)?.label ?? pending.from, to: actorFor(pending.to)?.label ?? pending.to, message: pending.message, ...(op.step ? { step: op.step } : {}), payload: pending.payload });
+        } else if (pending?.kind === "timer") {
+          operations.push({ operation: op.op, instance: actorFor(pending.to)?.label ?? pending.to, timer: pending.timer });
+        } else operations.push({ operation: op.op, pending: op.pending });
+        break;
+      }
+    }
+    before = session.steps[index]?.world ?? before;
+  }
+  const timeline = session.steps.flatMap(({ event }, index) => event ? [{ step: index + 1, actor: beforeLabel(session, index, event.instance), kind: event.kind, description: event.text ?? event.description }] : []);
+  return {
+    request: "Add a tsmodel scenario that reproduces this playground timeline. Use the spec's scenario DSL and preserve the order of meaningful actions.",
+    spec: spec.name,
+    scenario: { name: session.origin === "New scenario" ? "Choose a descriptive name" : session.origin, operations },
+    timeline,
+  };
+}
+
+function beforeLabel(session: Session, index: number, instanceId: string): string {
+  return session.steps[index]?.world.instances.find((instance) => instance.id === instanceId)?.label ?? instanceId;
+}
+
+export function current(session: Session): World {
+  return session.steps.at(-1)?.world ?? session.initial;
+}
+
+/** Apply one operation; the engine records spec bugs on the event rather than throwing. */
+export function apply(spec: Spec, session: Session, op: Op): Session {
+  const step = run(spec, current(session), op);
+  return { ...session, steps: [...session.steps, step], ops: session.ops ? [...session.ops, op] : null };
+}
+
+function run(spec: Spec, world: World, op: Op): Step {
+  switch (op.op) {
+    case "spawn":
+      return spawn(spec, world, op.actor, op.label);
+    case "act":
+      return act(spec, world, op.instance, op.key, op.inputs);
+    case "fire":
+      return fire(spec, world, op.pending, op.step);
+    case "guard":
+      return guard(spec, world, op.instance, op.key);
+  }
+}
+
+/** Keep the first `count` steps: rolling back to a moment in the timeline. */
+export function rollback(session: Session, count: number): Session {
+  return { ...session, steps: session.steps.slice(0, count), ops: session.ops ? session.ops.slice(0, count) : null };
+}
+
+/**
+ * Replay a session's operations against a spec, stopping at the first that no longer applies.
+ * A session that began as a scenario with a setup starts in the world its setup sets.
+ */
+export function replay(spec: Spec, ops: Op[], origin: string): Session {
+  let session: Session = { ...freshSession(spec), origin };
+  const scenario = spec.scenarios.find((s) => s.name === origin);
+  if (scenario?.setup) {
+    try {
+      session = { ...session, initial: scenarioStart(spec, scenario) };
+    } catch {
+      // A setup that fails leaves the spec's start; the scenario reports why.
+    }
+  }
+  for (const op of ops) {
+    try {
+      const next = apply(spec, session, op);
+      if (next.steps.at(-1)?.event?.error) break;
+      session = next;
+    } catch {
+      break;
+    }
+  }
+  return session;
+}
+
+/** What to do next, in the order a person would: what is due, then what they can do. */
+export type Hint =
+  | { kind: "guard"; instance: string; key: string }
+  | { kind: "pending"; pending: World["pending"][number] }
+  | { kind: "spawn"; actor: string }
+  | { kind: "act"; instance: string; key: string }
+  | { kind: "done" };
+
+export function nextHint(spec: Spec, world: World): Hint {
+  const { guards, actions } = choices(spec, world);
+  // As a run left alone does: a step with `fair: false`, such as a crash, waits to be asked for.
+  const fair = guards.find((g) => actorNamed(spec, instanceById(world, g.instance).actor).transitions[g.key]!.fair !== false);
+  if (fair) return { kind: "guard", ...fair };
+  const [first] = pendingInOrder(world);
+  if (first) return { kind: "pending", pending: first };
+  const spawnable = spec.actors.filter((a) => !a.singleton);
+  const missing = spawnable.find((a) => !world.instances.some((i) => i.actor === a.name) && Object.keys(a.actions).length);
+  if (missing) return { kind: "spawn", actor: missing.name };
+  if (actions.length) return { kind: "act", instance: actions[0].instance, key: actions[0].key };
+  return { kind: "done" };
+}
+
+/** The next free label for a new instance of an actor: "Mac 2". */
+export function nextLabel(world: World, actor: string): string {
+  const taken = new Set(world.instances.map((i) => i.label));
+  for (let n = 1; ; n++) {
+    const label = n === 1 ? actor : `${actor} ${n}`;
+    if (!taken.has(label)) return label;
+  }
+}
+
+/** Run what is due until nothing is, or `limit` events. */
+export function settle(spec: Spec, session: Session, limit = 200): Session {
+  let s = session;
+  for (let n = 0; n < limit; n++) {
+    const hint = nextHint(spec, current(s));
+    if (hint.kind === "guard") s = apply(spec, s, { op: "guard", instance: hint.instance, key: hint.key });
+    else if (hint.kind === "pending") s = apply(spec, s, { op: "fire", pending: hint.pending.id });
+    else break;
+    if (s.steps.at(-1)?.event?.error) break;
+  }
+  return s;
+}

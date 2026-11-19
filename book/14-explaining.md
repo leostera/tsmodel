@@ -13,9 +13,9 @@ The verdicts never change: everything here is about how the spec reads, not what
 ## Opening the explorer
 
 ```sh
-feynman dev            # serves the explorer, and reloads it on every save
-feynman build          # one self-contained HTML file, to send or host
-feynman open           # builds, and opens it
+tsmodel dev            # serves the explorer, and reloads it on every save
+tsmodel build          # one self-contained HTML file, to send or host
+tsmodel open           # builds, and opens it
 ```
 
 The explorer has three pages: the **playground**, the **flows**, and the **checks**.
@@ -146,7 +146,7 @@ And when the defaults can't show something, a **playground file** beside the spe
 ([`specs/14-explaining/4-ticket.play.tsx`](specs/14-explaining/4-ticket.play.tsx)):
 
 ```tsx
-import { Card, definePlayground, Panel, Ticket } from "@leostera/feynman/play";
+import { Card, definePlayground, Panel, Ticket } from "@tsmodel/tsmodel/play";
 import spec, { Bank, BoxOffice, Person } from "./4-ticket.ts";
 
 export default definePlayground(spec, (play) => {
@@ -183,7 +183,7 @@ The rules for a playground file:
 - **It can only show what the state holds.** To show the card statement, the bank's state must
   keep its charges. Add state for a picture only if it's true to the system, and the verdicts
   stay the same.
-- **`feynman check` type-checks it** with the spec. A panel that reads `state.payments`, which
+- **`tsmodel check` type-checks it** with the spec. A panel that reads `state.payments`, which
   doesn't exist, fails the check:
 
   ```text
@@ -211,16 +211,16 @@ asks about.
 
 ## Checks
 
-The checks page is `feynman check` for people who won't run it:
+The checks page is `tsmodel check` for people who won't run it:
 
 ![The checks page: every property holds, and every rule is needed](images/14/checks.png)
 
 The headline is as strong as the weakest verdict. Here every property holds; one that only
-"held in the states explored" would say so first. Put the bounds the spec needs in `feynman.config.ts`, so
+"held in the states explored" would say so first. Put the bounds the spec needs in `tsmodel.config.ts`, so
 the explorer and the CLI agree without flags:
 
 ```ts
-import { defineConfig } from "@leostera/feynman/config";
+import { defineConfig } from "@tsmodel/tsmodel/config";
 
 export default defineConfig({ specs: ["specs/*.ts"], check: { instances: { Person: 2 } } });
 ```
@@ -249,5 +249,5 @@ the questions people ask.
    it?
 3. Add an Usher with an action `admit` whose input `accepts: "ticket"`, and a property that
    nobody is admitted without a ticket. Drag Alice's ticket onto the usher.
-4. Pick a spec from `packages/feynman/examples/` and do the tour. What was the first thing you
+4. Pick a spec from `packages/tsmodel/examples/` and do the tour. What was the first thing you
    didn't understand? Which line of the spec would fix it?

@@ -19,7 +19,7 @@ export interface ShareExports {
 export function shareExports(ctx: { readonly exports?: unknown }): ShareExports {
   const exports = ctx.exports as Partial<ShareExports> | undefined;
   if (!exports?.ShareBuilder || !exports.ShareGate || typeof exports.ShareOutbound !== "function") {
-    throw new Error("the Worker's main module must export ShareBuilder, ShareGate and ShareOutbound from @feynman/share");
+    throw new Error("the Worker's main module must export ShareBuilder, ShareGate and ShareOutbound from @tsmodel/share");
   }
   return exports as ShareExports;
 }

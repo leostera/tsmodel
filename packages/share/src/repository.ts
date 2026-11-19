@@ -6,7 +6,7 @@
 export interface Repository {
   /** Lowercase DNS name, such as `github.com`. Never an IP address or `localhost`. */
   readonly host: string;
-  /** Path segments without a trailing `.git`, such as `leostera/feynman`. */
+  /** Path segments without a trailing `.git`, such as `leostera/tsmodel`. */
   readonly path: string;
   /** Where to fetch it from: `https://<host>/<path>`. */
   readonly url: string;
@@ -20,7 +20,7 @@ const LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const SEGMENT = /^[A-Za-z0-9._~-]+$/;
 const MAX_SEGMENTS = 20;
 
-/** `github.com/leostera/feynman` (what follows /s/) → the repository it names. */
+/** `github.com/leostera/tsmodel` (what follows /s/) → the repository it names. */
 export function parseRepository(route: string): RepositoryParse {
   let decoded: string;
   try {
@@ -31,7 +31,7 @@ export function parseRepository(route: string): RepositoryParse {
   const [rawHost = "", ...segments] = decoded.replace(/\/+$/, "").split("/");
   const host = rawHost.toLowerCase();
   if (!isPublicHostname(host)) return { ok: false, reason: `${JSON.stringify(rawHost)} is not a public hostname` };
-  if (segments.length === 0) return { ok: false, reason: "name a repository after the host, such as github.com/leostera/feynman" };
+  if (segments.length === 0) return { ok: false, reason: "name a repository after the host, such as github.com/leostera/tsmodel" };
   if (segments.length > MAX_SEGMENTS) return { ok: false, reason: `a repository path has at most ${MAX_SEGMENTS} segments` };
   for (const segment of segments) {
     if (!SEGMENT.test(segment) || segment === "." || segment === "..") {

@@ -6,19 +6,19 @@ Everything the book uses, on one page, with the chapter that explains it.
 
 | Command | What it does | Chapter |
 | --- | --- | --- |
-| `feynman list` | the specs it finds, with their size | 2 |
-| `feynman run <spec>` | every scenario, one line each: `✓`, or `✗` and why | 6 |
-| `feynman run <spec> --scenario NAME` | one scenario's trace; `--all` for every one | 6 |
-| `feynman check <spec>` | explore every order of events within the bounds, and judge every property | 1, 5 |
-| `feynman conform <spec> <log.jsonl>` | whether a log of what the system did is a run of the spec; `--gap N`, `--unlogged A`, `--logs-faults`, `--as-scenario` | 15 |
-| `feynman conform <spec> <trace.json>` | the same for an OpenTelemetry, Jaeger or Zipkin trace; `--map map.ts`, `--trace ID`, `--order time` | 15 |
-| `feynman lock` | record what the code each source points at looks like | 13 |
-| `feynman diff <spec> --base REF` | every scenario's flow, on REF and now, compared | 13 |
-| `feynman dev` | the explorer, reloading on save | 14 |
-| `feynman build` / `open` | the explorer as one HTML file | 14 |
+| `tsmodel list` | the specs it finds, with their size | 2 |
+| `tsmodel run <spec>` | every scenario, one line each: `✓`, or `✗` and why | 6 |
+| `tsmodel run <spec> --scenario NAME` | one scenario's trace; `--all` for every one | 6 |
+| `tsmodel check <spec>` | explore every order of events within the bounds, and judge every property | 1, 5 |
+| `tsmodel conform <spec> <log.jsonl>` | whether a log of what the system did is a run of the spec; `--gap N`, `--unlogged A`, `--logs-faults`, `--as-scenario` | 15 |
+| `tsmodel conform <spec> <trace.json>` | the same for an OpenTelemetry, Jaeger or Zipkin trace; `--map map.ts`, `--trace ID`, `--order time` | 15 |
+| `tsmodel lock` | record what the code each source points at looks like | 13 |
+| `tsmodel diff <spec> --base REF` | every scenario's flow, on REF and now, compared | 13 |
+| `tsmodel dev` | the explorer, reloading on save | 14 |
+| `tsmodel build` / `open` | the explorer as one HTML file | 14 |
 
 A spec is found by its path, by its file name without `.ts`, or by `specs/*.ts` next to a
-`package.json`, or by the globs in `feynman.config.ts`.
+`package.json`, or by the globs in `tsmodel.config.ts`.
 
 ## `check` flags
 
@@ -35,10 +35,10 @@ A spec is found by its path, by its file name without `.ts`, or by `specs/*.ts` 
 | `--walks N`, `--walk-depth N` | 2,000; 120 | 12 |
 | `--no-symmetry` | symmetry on where declared | 12 |
 
-Defaults for a whole repository go in `feynman.config.ts`:
+Defaults for a whole repository go in `tsmodel.config.ts`:
 
 ```ts
-import { defineConfig } from "@leostera/feynman/config";
+import { defineConfig } from "@tsmodel/tsmodel/config";
 
 export default defineConfig({ specs: ["specs/*.ts"], check: { maxStates: 500_000 } });
 ```
@@ -87,7 +87,7 @@ export default defineConfig({ specs: ["specs/*.ts"], check: { maxStates: 500_000
 | `ctx.note(text)` | explain this one event in the trace |
 | `ctx.self`, `ctx.id`, `ctx.from` | who is running, and who sent the message |
 
-## Faults and bounds (`@leostera/feynman`)
+## Faults and bounds (`@tsmodel/tsmodel`)
 
 | Part | Means | Chapter |
 | --- | --- | --- |
@@ -113,7 +113,7 @@ export default defineConfig({ specs: ["specs/*.ts"], check: { maxStates: 500_000
 ## Display (chapter 14)
 
 `display: { icon, names, status, mood, rows, owner, tokens, shape }` on an actor, and `say`
-on a step. `<spec>.play.tsx` with `definePlayground` from `@leostera/feynman/play` for
+on a step. `<spec>.play.tsx` with `definePlayground` from `@tsmodel/tsmodel/play` for
 anything else.
 
 ## Habits from the book

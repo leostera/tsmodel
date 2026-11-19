@@ -214,7 +214,7 @@ where it ended, with Alice and Bob both in the world, and found trouble there.
 `--only` shows one property's counterexample in full:
 
 ```sh
-feynman check specs/05-properties/2-a-database.ts --only ticketsMatchTheBooks
+tsmodel check specs/05-properties/2-a-database.ts --only ticketsMatchTheBooks
 ```
 
 ```text

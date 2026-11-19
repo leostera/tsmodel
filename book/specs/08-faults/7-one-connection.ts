@@ -2,7 +2,7 @@
 //
 // Expected: `lastChoiceWins` holds without faults, and breaks in 2 events with one
 // (`--set faults=1`: choose A1, it is lost).
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineSpec, defineZone, lose, oneOf } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineSpec, defineZone, lose, oneOf } from "@tsmodel/tsmodel";
 
 /** No faults unless asked for: `--set faults=1` allows one. */
 const faults = budget("faults", 0);

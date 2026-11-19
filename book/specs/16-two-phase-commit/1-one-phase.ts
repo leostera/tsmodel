@@ -2,7 +2,7 @@
 //
 // Expected: `atomic` breaks in 4 events, with no faults: the stock runs out, the shop tells
 // both services to commit, and the payment goes through for an order that cannot ship.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 type Outcome = "committed" | "aborted";
 

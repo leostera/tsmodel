@@ -19,13 +19,13 @@ const someoneGetsASeat = defineProperty("someoneGetsASeat", {
 });
 ```
 
-`feynman check` holds it when some world on some path satisfies the predicate, and shows the
+`tsmodel check` holds it when some world on some path satisfies the predicate, and shows the
 shortest way there. It breaks it, `✗ never reached`, only when the search explored every
 world and none does. A search cut off before then reads `~`: not reached yet.
 
 ## Motivation
 
-Every property Feynman had was a claim about all paths: `always`, `everyStep` and `never`
+Every property tsmodel had was a claim about all paths: `always`, `everyStep` and `never`
 say nothing bad happens, and liveness says something good happens on every fair path. A
 system that does nothing keeps every safety claim. In the book's box office, a database
 whose conditional write always fails keeps `oneOwnerPerSeat`, `ticketsMatchTheBooks` and
@@ -62,7 +62,7 @@ Write one for each thing the system is for: an order goes through, a leader is e
 payment settles. Check prints one of:
 
 ```text
-  ✓ someoneGetsASeat  Someone can buy a ticket.  reached in 5 event(s); see the way there with feynman check … --only <property>
+  ✓ someoneGetsASeat  Someone can buy a ticket.  reached in 5 event(s); see the way there with tsmodel check … --only <property>
   ✓ someoneGetsASeat  Someone can buy a ticket.  reached at the end of scenario "Both want A1"
   ✗ someoneGetsASeat  Someone can buy a ticket.  never reached: no world within the bounds gets there, of the 132 explored
   ~ someoneGetsASeat  Someone can buy a ticket.  not reached by depth 4, but paths that had not got there yet were cut off at that depth: it may be reached further on

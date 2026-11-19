@@ -17,7 +17,7 @@
 /** A full commit id: 40 hex digits (SHA-1) or 64 (SHA-256), lowercase. */
 export type Commit = string & { readonly __commit: unique symbol };
 
-const USER_AGENT = "git/2.47.0 (feynman-share)";
+const USER_AGENT = "git/2.47.0 (tsmodel-share)";
 const FLUSH = "0000";
 
 /** The most of a ref advertisement read: a repository with more refs than fit is turned away. */

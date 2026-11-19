@@ -2,7 +2,7 @@
 //
 // Expected: the scenario "Both want A2 at once" breaks `soldSeatsStaySold`,
 // `ticketsMatchTheBooks` and `oneOwnerPerSeat`, and so does the search.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

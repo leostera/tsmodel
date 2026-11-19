@@ -1,0 +1,311 @@
+// Text output: what agents and people read in a terminal.
+import { faultsIn, hasFaults, placeText, type Counterexample, type PropertyBroken, type PropertyResult, type Report } from "../check/index.ts";
+import type { SourceStatus } from "../code/index.ts";
+import { deliveryName, FAULT, messageName, type Event, type RunDiff, type Spec, type World } from "../spec/index.ts";
+import { verdictOf, type Verdict } from "../check/verdict.ts";
+
+const color = process.stdout.isTTY && !process.env.NO_COLOR;
+const paint = (code: number) => (text: string) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
+export const dim = paint(2);
+export const bold = paint(1);
+export const red = paint(31);
+export const green = paint(32);
+export const yellow = paint(33);
+
+export function seconds(ms: number): string {
+  return ms < 1000 ? `${ms}ms` : ms < 60_000 ? `${(ms / 1000).toFixed(ms % 1000 ? 2 : 0)}s` : `${(ms / 60_000).toFixed(1)}min`;
+}
+
+/** JSON, but a Set reads as the list of its members and a Map as an object of its entries. */
+function json(v: unknown): string | undefined {
+  return JSON.stringify(v, (_key, x) => (x instanceof Set ? [...x] : x instanceof Map ? Object.fromEntries(x) : x));
+}
+
+function value(v: unknown): string {
+  const text = json(v);
+  return text === undefined ? "—" : text.length > 80 ? `${text.slice(0, 77)}…` : text;
+}
+
+/** The spec's model variables as they are set: `faults=1`, `repeats=2` (one per instance aside). */
+function variablesText(spec: Spec): string[] {
+  return spec.variables.filter((v) => !v.each).map((v) => `${v.name}=${JSON.stringify(v.initial)}`);
+}
+
+function label(world: World | undefined, id: string): string {
+  return world?.instances.find((i) => i.id === id)?.label ?? id;
+}
+
+function stepName(spec: Spec, event: Event): string {
+  if (event.kind === "spawn") return event.kind;
+  if (event.kind === "deliver") return deliveryName(spec, event);
+  return event.key;
+}
+
+/** One event, with what it changed and sent. */
+export function formatEvent(spec: Spec, event: Event, world?: World, position = event.index): string {
+  const who = `${label(world, event.instance)} (${event.actor})`;
+  const head = [dim(String(position).padStart(4)), bold(who), stepName(spec, event)];
+  if (event.inputs && Object.keys(event.inputs).length) head.push(dim(value(event.inputs)));
+  else if (event.payload !== undefined && event.kind !== "spawn") head.push(dim(value(event.payload)));
+  if (event.from) head.push(dim(`from ${label(world, event.from)}`));
+  const lines = [head.join("  ")];
+  const pad = " ".repeat(6);
+  if (event.kind !== "spawn") lines.push(pad + dim(event.description));
+  for (const note of event.notes) lines.push(pad + dim(`“${note}”`));
+  if (event.kind !== "spawn") for (const c of event.changes) lines.push(`${pad}${c.path || "state"}: ${value(c.before)} → ${value(c.after)}`);
+  for (const s of event.sent) lines.push(`${pad}→ ${label(world, s.to)}: ${messageName(spec, s.message)} ${dim(value(s.payload))}`);
+  for (const t of event.started) lines.push(`${pad}${dim(`⏱ ${t.timer} set`)}`);
+  for (const t of event.cancelled) lines.push(`${pad}${dim(`⏱ ${t} cancelled`)}`);
+  if (event.error) lines.push(`${pad}${red(`spec error: ${event.error}`)}`);
+  for (const v of event.violations) lines.push(`${pad}${red(`✗ breaks ${v}`)}`);
+  return lines.join("\n");
+}
+
+export function formatEvents(spec: Spec, events: Event[], worlds: World[]): string {
+  return events.map((e, i) => formatEvent(spec, e, worlds[i], i + 1)).join("\n");
+}
+
+export function formatSources(statuses: SourceStatus[]): string[] {
+  const lines: string[] = [];
+  const missing = statuses.filter((s) => s.status === "missing");
+  const stale = statuses.filter((s) => s.status === "stale");
+  const fresh = statuses.filter((s) => s.status === "new");
+  for (const s of missing) lines.push(red(`  ✗ source ${s.source} ${s.status === "missing" ? s.reason : ""}`));
+  for (const s of stale) lines.push(yellow(`  ! stale: ${s.source} changed since the spec was last locked; check the steps that name it, then run tsmodel lock`));
+  if (fresh.length) lines.push(dim(`  ${fresh.length} source(s) not in tsmodel.lock yet; run tsmodel lock once the spec is right`));
+  return lines;
+}
+
+/** What else the search did: random runs, and the instances it took as interchangeable. */
+function searchNotes(report: Report): string[] {
+  const notes: string[] = [];
+  if (report.walks.runs) notes.push(`  also ${thousands(report.walks.runs)} random run(s), ${thousands(report.walks.steps)} steps, up to ${report.walks.deepest} deep: they find bugs deeper than the search, but prove nothing`);
+  const symmetric = report.reductions.symmetric.map((labels) => labels.join(" = ")).join(", ");
+  if (symmetric) notes.push(`  treated as interchangeable: ${symmetric}`);
+  const out = notes.map((n) => dim(n));
+  if (report.reductions.refuted?.length)
+    out.push(yellow(`  ! ${report.reductions.refuted.join(", ")} declared symmetric, but swapping two instances changed what happens next; checked without symmetry. Remove symmetric: true.`));
+  return out;
+}
+
+export interface ReportOptions {
+  /** Properties a scenario breaks: broken whatever exploration found. */
+  brokenBy?: Map<string, string>;
+  /** Verdicts and counterexample sizes, without the traces. */
+  brief?: boolean;
+  /** How each property is read; by default from the report alone. */
+  verdict?: (p: PropertyResult) => Verdict;
+  /** The command that checked this spec, to say how to see one counterexample. */
+  command?: string;
+  /** Show the way to each reachable property's world, not only its length (`--only`). */
+  witnesses?: boolean;
+}
+
+/**
+ * The checker's report. Properties a scenario already breaks show as broken whatever
+ * exploration found. A property that held while exploration stopped early says so, rather
+ * than claiming to hold.
+ */
+export function formatReport(spec: Spec, report: Report, options: ReportOptions = {}): string {
+  const brokenBy = options.brokenBy ?? new Map<string, string>();
+  const verdict = options.verdict ?? ((p: PropertyResult) => verdictOf(p, { report, brokenBy }));
+  const b = report.bounds;
+  const instances = Object.entries(b.instances).map(([actor, n]) => `${n} ${actor}`).join(", ");
+  const scope = [instances || "1 of each actor", ...seedsText(report.seeds), ...depthText(b.depth), ...variablesText(spec)].join(", ");
+  const lines = [
+    `${bold(spec.name)}: explored ${thousands(report.states)} states (${scope}) in ${seconds(report.durationMs)}${report.exhaustive ? "" : yellow(` — stopped at the ${limitName(report.stoppedBy)} limit before exploring everything`)}`,
+    ...varietyLines(report),
+    ...(hasFaults(spec) ? [] : [yellow("! no faults: every path has a perfect network and no crashes. Declare the ones the system meets, like lose(Debit) or crash().")]),
+    ...(options.brief ? [] : searchNotes(report)),
+  ];
+  for (const p of report.properties) {
+    const scenario = brokenBy.get(p.id);
+    const v = verdict(p);
+    if (v === "fixed") {
+      lines.push(red(`  ✓ ${p.id}`) + `  ${p.description}` + red(`  marked known ("${p.known}"), but ${p.kind === "reachable" ? "reached" : "holds"} now: remove known`));
+      continue;
+    }
+    if (v === "untested") {
+      lines.push(yellow(`  ? ${p.id}`) + dim(`  ${p.description}  never tested: exploration never reached a world where it applies`));
+      continue;
+    }
+    if (v === "unfinished") {
+      lines.push(yellow(`  ~ ${p.id}`) + dim(`  ${p.description}  ${unfinishedWhy(report, p)}`));
+      continue;
+    }
+    if (v === "holds") {
+      lines.push(green(`  ✓ ${p.id}`) + dim(`  ${p.description}${p.holds && p.witness ? `  ${reachedText(p.witness, p.witnessBy, options)}` : ""}`));
+      if (p.holds && p.witness?.events.length && options.witnesses && !options.brief) lines.push(indent(formatEvents(spec, p.witness.events, p.witness.worlds), 4));
+      continue;
+    }
+    const mark = v === "known" ? yellow(`  ✗ ${p.id}`) + `  ${p.description}` + yellow(`  known bug: ${p.known}`) : red(`  ✗ ${p.id}`) + `  ${p.description}`;
+    if (!p.holds && p.unreached) {
+      lines.push(mark + dim(`  never reached: no world within the bounds gets there, of the ${thousands(report.states)} explored`));
+      if (v === "broken" && !options.brief) lines.push(yellow(`    A guard too strict, a step that can never run, or bounds too small for it: more instances, a bigger budget, a scenario that sets the stage.`));
+      continue;
+    }
+    // Broken, or known, yet held: a scenario broke it (any other held verdict is handled above).
+    if (p.holds) {
+      lines.push(mark + dim(`  broken by scenario "${scenario}"; exploration did not reach it within these bounds`));
+      continue;
+    }
+    lines.push(mark, ...formatBroken(spec, p, options));
+  }
+  for (const e of report.errors) {
+    lines.push(red(`  ✗ spec error: ${e.message}`));
+    if (!options.brief) lines.push(indent(formatEvents(spec, e.counterexample.events, e.counterexample.worlds), 4));
+  }
+  if (report.stuck) {
+    lines.push(red(`  ✗ stuck: nothing can happen, and the spec does not call this world final (finalState in defineSpec)`));
+    if (!options.brief) lines.push(indent(formatEvents(spec, report.stuck.counterexample.events, report.stuck.counterexample.worlds), 4));
+    const lost = lostHint(spec, report.stuck.counterexample);
+    if (lost) lines.push(yellow(`    ${lost}`));
+  }
+  if (report.coverage.missed.length) lines.push(yellow(`  never ran: ${report.coverage.missed.join(", ")}`));
+  return lines.join("\n");
+}
+
+/** Which scenario worlds a search also started from: "and from the end of 4 scenario(s) and the setup of 1". */
+function seedsText(seeds: Report["seeds"]): string[] {
+  const ends = seeds.filter((s) => s.at === "end").length;
+  const starts = seeds.length - ends;
+  const parts = [...(ends ? [`the end of ${ends} scenario(s)`] : []), ...(starts ? [`the setup of ${starts}`] : [])];
+  return parts.length ? [`and from ${parts.join(" and ")}`] : [];
+}
+
+/**
+ * What the states of a stopped search differ in, most first: where to make a model smaller
+ * (a field that only grows, a log, a counter, a message with many payloads) rather than
+ * only raising limits.
+ */
+function varietyLines(report: Report): string[] {
+  if (!report.variety) return [];
+  const list = report.variety.map((v) => `${v.what} (${thousands(v.values)} values)`).join(", ");
+  const inFlight = `up to ${report.mostInFlight ?? 0} message(s) in flight at once`;
+  // A field with many values is the usual culprit; without one, it is the orders of what is in flight.
+  const grows = (report.variety[0]?.values ?? 0) >= GROWS;
+  const advice = grows
+    ? "A field that only grows (a log, a counter, ids) keeps every state new: bound it, or keep only what the properties read."
+    : "No one field grows much: it is the orders of the steps in flight. Smaller budgets (--set faults=0, --set repeats=1), fewer instances, or fewer requests at once in the scenarios, shrink it.";
+  return [dim(`  states differ most in: ${list || "nothing"}; ${inFlight}. ${advice}`)];
+}
+
+/** How many values make a field the likely reason a search does not finish. */
+const GROWS = 50;
+
+/** The limit that stopped a search, as a word: "state", "time", "memory". */
+export function limitName(reason: Report["stoppedBy"]): string {
+  return reason === "maxStates" ? "state" : reason === "timeLimit" ? "time" : "memory";
+}
+
+/** The depth bound, as the scope line says it: nothing when there is none. */
+function depthText(depth: number): string[] {
+  return Number.isFinite(depth) ? [`depth ${depth}`] : [];
+}
+
+/** How a reachable property got there: "reached in 4 event(s), from the end of scenario …". */
+function reachedText(witness: Counterexample, by: "search" | "walk" | undefined, options: ReportOptions): string {
+  // Where the search starts is there already: the initial world, or a scenario's end. No way to show.
+  if (!witness.events.length) return witness.from ? `reached at ${placeText(witness.from)}` : "reached in the initial world";
+  const how = by === "walk" ? `reached in ${witness.events.length} event(s), by a random run past the search's depth` : `reached in ${witness.events.length} event(s)`;
+  const from = witness.from ? `, from ${placeText(witness.from)}` : "";
+  return `${how}${from}${options.witnesses || !options.command ? "" : `; see the way there with ${options.command} --only <property>`}`;
+}
+
+/** Why a property that held is not proved: exploration stopped early, or paths were cut off at the depth bound. */
+function unfinishedWhy(report: Report, p: Report["properties"][number]): string {
+  const limit = limitName(report.stoppedBy);
+  if (!p.holds && p.unreached) {
+    if (report.stoppedBy && p.upTo !== undefined) return `not reached on any path of up to ${p.upTo} event(s); the ${limit} limit stopped the search before longer ones`;
+    if (report.stoppedBy) return `not reached in the ${thousands(report.states)} states explored before the ${limit} limit, not all of them`;
+    if (report.chance?.length) return `not reached with the random numbers ${report.chance.join(", ")} drew, which are seeded: other values were not tried`;
+    return `not reached by depth ${report.bounds.depth}, but paths that had not got there yet were cut off at that depth: it may be reached further on`;
+  }
+  if (report.stoppedBy && p.holds && p.upTo !== undefined) return `held on every path of up to ${p.upTo} event(s); the ${limit} limit stopped the search before longer ones`;
+  if (report.stoppedBy) return `held in the ${thousands(report.states)} states explored before the ${limit} limit, not all of them`;
+  if (report.chance?.length && !(p.holds && p.unfinished)) return `held with the random numbers ${report.chance.join(", ")} drew, which are seeded: other values were not tried`;
+  return `held to depth ${report.bounds.depth}, but paths that had not got there yet were cut off at that depth: it may break further on`;
+}
+
+/** What to do about the unfinished verdicts in a report, for the line under them. */
+export function unfinishedHint(report: Report): string {
+  if (report.chance?.length && !report.stoppedBy) return `"~" is not a proof: ctx.random() gives each draw one value. Make what it decides an input (oneOf) or two steps, so the checker tries each.`;
+  if (report.stoppedBy === "maxStates") return `"~" is not a proof: raise --max-states (check.maxStates in tsmodel.config.ts), or lower --depth, until exploration finishes.`;
+  if (report.stoppedBy === "timeLimit") return `"~" is not a proof: raise --time-limit (check.timeLimit in tsmodel.config.ts), or lower --depth, until exploration finishes.`;
+  if (report.stoppedBy === "memoryLimit")
+    return `"~" is not a proof: the search filled the memory it may use (--memory-limit GB, or check.memoryLimit in megabytes in tsmodel.config.ts). Lower --depth or a budget (--set repeats=1), or make the state smaller: see what varies most above.`;
+  return `"~" is not a proof: raise --depth (check.depth in tsmodel.config.ts; it is ${report.bounds.depth} now), or leave it out to search every depth, until no path is cut off before it gets there or loops.`;
+}
+
+/** How a broken property breaks: the counterexample, how it was found, and for liveness the loop. */
+function formatBroken(spec: Spec, p: PropertyBroken, options: ReportOptions): string[] {
+  const { counterexample: ce, loop } = p;
+  const faults = faultsIn(ce.events);
+  const found = p.foundBy === "walk" ? `found by a random run past the search's depth, shrunk to ${ce.events.length} event(s)` : `shortest counterexample, ${ce.events.length} event(s)`;
+  const needs = faults ? `needs ${faults} fault(s)` : "needs no faults";
+  const shorter = p.shorter ? `; a shorter one, ${p.shorter.events} event(s), needs ${p.shorter.faults} fault(s)` : "";
+  const from = ce.from ? `, from ${placeText(ce.from)}` : "";
+  if (options.brief) return [dim(`    ${found}, ${needs}${from}${shorter}${options.command ? `; see it with ${options.command} --only ${p.id}` : ""}`)];
+  const lines = [dim(`    ${found}, ${needs}${from}${shorter}:`), indent(formatEvents(spec, ce.events, ce.worlds), 4)];
+  if (loop?.events.length) lines.push(dim(`    then this repeats forever, and it never holds:`), indent(formatEvents(spec, loop.events, loop.worlds), 4));
+  else if (loop) lines.push(dim(`    then nothing fair can happen: it stays there forever, and never holds`));
+  const lost = loop && !loop.events.length ? lostHint(spec, ce) : null;
+  if (lost) lines.push(yellow(`    ${lost}`));
+  return lines;
+}
+
+/**
+ * For a path that ends with nothing left to happen after a message was lost: the sender is
+ * waiting for an answer that cannot come. Agents tend to make this go away by weakening the
+ * property or calling every quiet world final; say what the code does instead.
+ */
+function lostHint(spec: Spec, path: { events: readonly Event[]; worlds: readonly World[] }): string | null {
+  // A fault on a message that sent nothing on lost it; one that failed a call was heard.
+  const lost = path.events.find((e) => e.kind === "deliver" && e.tags?.includes(FAULT) && e.sent.length === 0);
+  if (!lost || !lost.message) return null;
+  const message = spec.messages[lost.message];
+  const labelOf = (id: string | undefined) => path.worlds.at(-1)?.instances.find((i) => i.id === id)?.label ?? id;
+  // A lost request leaves its sender waiting; a lost reply, the one it was for.
+  const waiting = labelOf(message?.tone && message.tone !== "request" ? lost.instance : lost.from);
+  return [
+    `The lost ${message?.name ?? lost.message} to ${labelOf(lost.instance)} is never sent again, so ${waiting} waits for an answer that cannot come.`,
+    `Model what the code does when none comes: if the code is told (an RPC or fetch that throws), define ${message?.id ?? lost.message} with defineCall and handle its failure with a step on failed(${message?.id ?? "it"}); otherwise a timer that retries. If it cannot be lost here, drop its lose step.`,
+    `If the code has no answer for it, that is a finding: report it, rather than weaken the property or call this world final.`,
+  ].join("\n    ");
+}
+
+export function formatDiff(spec: Spec, scenario: string, diff: RunDiff | "added" | "removed"): string {
+  if (diff === "added" || diff === "removed") return `${bold(scenario)}: ${diff === "added" ? green("new scenario") : red("scenario removed")}`;
+  if (diff.status === "same") return `${bold(scenario)}: ${dim("unchanged")}`;
+  const lines = [`${bold(scenario)}: ${yellow("changed")}`];
+  for (const step of diff.steps) {
+    const e = (step.head ?? step.base)!;
+    const mark = { same: dim("  "), changed: yellow("~ "), added: green("+ "), removed: red("- ") }[step.status];
+    const text = `${e.actor}.${stepName(spec, e)}`;
+    lines.push(`  ${mark}${step.status === "same" ? dim(text) : text}`);
+    if (step.status === "changed" && step.base && step.head) {
+      const before = new Map(step.base.changes.map((c) => [c.path, c.after]));
+      for (const c of step.head.changes) if (json(before.get(c.path)) !== json(c.after)) lines.push(`      ${c.path}: was ${value(before.get(c.path))}, now ${value(c.after)}`);
+      const sentBefore = step.base.sent.map((s) => s.message).join(", ") || "nothing";
+      const sentNow = step.head.sent.map((s) => s.message).join(", ") || "nothing";
+      if (sentBefore !== sentNow) lines.push(`      sent: was ${sentBefore}, now ${sentNow}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function indent(text: string, n: number): string {
+  const pad = " ".repeat(n);
+  return text
+    .split("\n")
+    .map((line) => pad + line)
+    .join("\n");
+}
+
+/**
+ * A count with thousands separators: 1,359. Not toLocaleString, whose first call loads the
+ * locale data, a third of a second of a check's run.
+ */
+function thousands(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}

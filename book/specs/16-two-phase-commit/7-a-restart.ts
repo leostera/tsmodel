@@ -2,7 +2,7 @@
 //
 // Expected: every property holds, and `logDecision` is needed: without it,
 // `atomic` breaks with one restart.
-import { atMost, budget, crash, defineCall, failed, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, lose, type Setup } from "@leostera/feynman";
+import { atMost, budget, crash, defineCall, failed, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, lose, type Setup } from "@tsmodel/tsmodel";
 
 /** At most two faults on any path: a restart, and a lost message. */
 const faults = budget("faults", 2);

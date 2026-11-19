@@ -21,7 +21,7 @@ from the same components a playground file composes, so the two look like one pr
 
 ## Motivation
 
-The hand-built axo playground explains remote access better than the playground Feynman
+The hand-built axo playground explains remote access better than the playground tsmodel
 derives from a spec of the same system. Side by side, the differences are these:
 
 - **Abstraction.** It shows "Axo relay" as one thing. The spec, rightly, models the
@@ -99,7 +99,7 @@ export default defineSpec("Remote access", { messages }, (spec) => {
 `spec.handles`, since `spec.actors` is already the runtime list):
 
 ```tsx
-import { definePlayground, Node, Ticket, Terminal, Rows, countdown } from "@feynman/play";
+import { definePlayground, Node, Ticket, Terminal, Rows, countdown } from "@tsmodel/play";
 import spec from "./remote-access.ts";
 
 export default definePlayground(spec, (play) => {
@@ -192,34 +192,34 @@ now.
 
 ### Architecture and boundaries
 
-- **`@feynman/spec`**:
+- **`@tsmodel/spec`**:
   - `defineSpec`'s body may return its actor handles, which become `spec.actors` with
     their types.
   - `spec.defineGroup` records groups as data.
   - Nothing else changes; no React anywhere.
-- **`@feynman/play`** (new package), the component kit and the `definePlayground`
+- **`@tsmodel/play`** (new package), the component kit and the `definePlayground`
   builder:
   - The components are `Node`, `Ticket`, `Terminal`, `Rows`, `Card`, `Badge`, `Panel`,
     `ActionBar` and `Link` styles.
   - It depends on React and Kumo.
   - The view's default presentation is built from these same components.
-- **`@feynman/view`** loads a spec's playground file if there is one, and otherwise uses the
+- **`@tsmodel/view`** loads a spec's playground file if there is one, and otherwise uses the
   default presentation. It owns layout, time, the timeline, menus, drag and drop, and
   dialogs; render functions only draw.
-- **`@feynman/cli`**:
+- **`@tsmodel/cli`**:
   - Discovery pairs `specs/<name>.ts` with `specs/<name>.play.tsx`.
   - `prepare` bundles the playground for the browser, with `react`, `@cloudflare/kumo` and
-    `@feynman/play` aliased to the view's copies, so a repository installs nothing.
+    `@tsmodel/play` aliased to the view's copies, so a repository installs nothing.
   - `check` type-checks the playground file along with the spec, but never runs it.
 
 ### Data model and interfaces
 
 ```ts
-// @feynman/spec
+// @tsmodel/spec
 defineSpec<M, H extends Record<string, Actor<any, any>>>(name, options, body: (spec) => H | void): Spec & { actors: H };
 spec.defineGroup(def: { name: string; actors: Actor[]; description?: string }): Group;
 
-// @feynman/play
+// @tsmodel/play
 definePlayground<S extends Spec & { actors: Record<string, Actor> }>(spec: S, body: (play: PlayBuilder<S>) => void): Playground;
 
 interface PlayBuilder<S> {
@@ -252,7 +252,7 @@ interface NodeProps<A> {
   time runs, so they must be cheap.
 - **A render function that throws** falls back to the default presentation for that
   thing, with a small warning badge on it in the playground; the error is shown in the
-  console and by `feynman check` when it can be found statically.
+  console and by `tsmodel check` when it can be found statically.
 - **`act` runs through the same path as the action bar:** the session records the
   operation, the clock and time travel apply, and acting in the past branches from
   there. Acting while previewing a moment does nothing.
@@ -292,7 +292,7 @@ same rule applies: only build sites from repositories you trust.
    16/20 or better.
 2. Typed handles from `defineSpec`, and `spec.defineGroup` with collapsing, internal
    messages and timeline folding.
-3. `@feynman/play`, playground discovery and bundling, and `act` in props.
+3. `@tsmodel/play`, playground discovery and bundling, and `act` in props.
 4. Write `remote-access.play.tsx` for the axo test bed: a relay group, Macs as one
    device, a terminal panel, and tickets. Validate by walking the hand-built playground's
    flow end to end: sign in, pair, drag the code, see it go green, open the Mac, run
@@ -307,7 +307,7 @@ same rule applies: only build sites from repositories you trust.
   than style from scratch. The Impeccable detector runs on the built page.
 - Two files per explainer to keep in step. Typed handles catch renamed actors and
   actions; nothing catches a render that silently stops making sense.
-- React and Kumo become part of Feynman's public surface through `@feynman/play`.
+- React and Kumo become part of tsmodel's public surface through `@tsmodel/play`.
 
 ## Rationale and alternatives
 
@@ -372,7 +372,7 @@ hand-built, disconnected from the spec and the checker.
 - **Choosing an input:** a one-input action offers its choices in the action bar. When
   the choices are instances, their nodes light up and clicking one chooses it.
 - **Bundling:** a playground module is bundled with `react`, `react/jsx-runtime`,
-  `@cloudflare/kumo` and `@feynman/play` read from a global the page sets, so there is
+  `@cloudflare/kumo` and `@tsmodel/play` read from a global the page sets, so there is
   one React and the kit's classes are in the page's stylesheet. Tailwind classes written
   in a playground file are not compiled; use the kit, or `style` with Kumo variables.
 - **Validation** on the axo test bed:
@@ -386,7 +386,7 @@ hand-built, disconnected from the spec and the checker.
 
 - How internal messages of a collapsed group animate, if at all: a pulse on the group node?
 - How panels lay out when several are open: attached to their node, or docked?
-- Whether `feynman check` should screenshot the default and custom playgrounds and run
+- Whether `tsmodel check` should screenshot the default and custom playgrounds and run
   the detector.
 - Whether to compile Tailwind classes used in playground files, per file, at build time.
 

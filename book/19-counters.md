@@ -108,7 +108,7 @@ lose a message, or deliver it twice:
 On a perfect network, it works:
 
 ```sh
-feynman check specs/19-counters/2-send-the-like.ts --set faults=0
+tsmodel check specs/19-counters/2-send-the-like.ts --set faults=0
 ```
 
 ```text
@@ -275,5 +275,5 @@ all built this way.
    shown value is never negative. Does it hold? Should it?
 3. Run step 4 with three replicas (a third in the setup). How many states? Does any verdict
    change?
-4. `packages/feynman/examples/lww-register.ts` is a last-writer-wins register. Read it, and
+4. `packages/tsmodel/examples/lww-register.ts` is a last-writer-wins register. Read it, and
    find which column of the table above it fails.

@@ -12,7 +12,7 @@ At the counter, one clerk did one thing at a time. Online, a person sends a requ
 on with their life, and the answer comes back later. In between, anything else may happen:
 another person's request may arrive first, and replies may arrive in any order.
 
-Feynman has no clock. A run is an order of events, and at every moment, anything pending may
+tsmodel has no clock. A run is an order of events, and at every moment, anything pending may
 go next: any message in flight, any action someone could take. A message sent first does not
 have to arrive first. This is how networks behave once you allow them to be slow, and it is
 where the interesting bugs live. (Messages on one connection do keep their order: chapter 8
@@ -120,7 +120,7 @@ Box office.buy: sends ticket, but no actor of Box office has a step on Ticket
 
 Nothing ran. `defineSpec` looked at the parts before anything started, and found a message
 sent that nobody receives. In a real system that message would arrive at a phone that doesn't
-know what to do with it. Feynman refuses such a spec outright. It refuses other parts that
+know what to do with it. tsmodel refuses such a spec outright. It refuses other parts that
 don't fit, too: two parts with one id, or a send the step doesn't declare.
 
 ## Step 2: getting the ticket
@@ -272,7 +272,7 @@ const bothWantA1 = defineScenario("Both want A1", {
 - `s.settle()` leaves the system alone: every message arrives in the order it was sent, until
   nothing is pending.
 
-`feynman run specs/04-online/4-two-people.ts` prints its trace:
+`tsmodel run specs/04-online/4-two-people.ts` prints its trace:
 
 ```text
 Both want A1 (book/specs/04-online/4-two-people.ts)
@@ -328,7 +328,7 @@ per seat, coloured by who bought it:
 ```
 
 `owner` names the instance a row belongs to, so A1's row wears Alice's colour once she has it.
-Run `feynman dev`, pick "Both want A1" as the start, and press Play. Two requests fly to the
+Run `tsmodel dev`, pick "Both want A1" as the start, and press Play. Two requests fly to the
 box office, and the answers fly back. Then go back to event 4, and deliver Bob's request first
 by clicking it in flight.
 

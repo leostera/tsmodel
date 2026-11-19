@@ -3,7 +3,7 @@
 // Expected: every property holds. Every rule is needed, but
 // `payOnlyTheHolder`: without it, a payment from Bob pays for Alice's order, which the new
 // property cannot see.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /**
  * At most two faults on any path: resuming payments after a restart only matters when a

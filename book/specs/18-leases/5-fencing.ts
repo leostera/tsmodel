@@ -2,7 +2,7 @@
 // write with an older token than one it has accepted.
 //
 // Expected: every property holds, and `fencing` is needed.
-import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, type Setup } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

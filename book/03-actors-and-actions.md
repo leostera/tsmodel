@@ -17,7 +17,7 @@ database you don't own, a device, a person. Tonight's show has two seats, and th
 knows how many are left:
 
 ```ts
-import { defineActor, defineSpec, defineZone } from "@leostera/feynman";
+import { defineActor, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const theatre = defineZone({ name: "Theatre", description: "the box office at the door" });
 
@@ -49,7 +49,7 @@ Box office: explored 1 states (1 of each actor) in 6ms
   ✗ stuck: nothing can happen, and the spec does not call this world final (finalState in defineSpec)
 ```
 
-One state, and the checker calls it **stuck**: nothing can happen in it. Feynman reports a
+One state, and the checker calls it **stuck**: nothing can happen in it. tsmodel reports a
 world where nothing can happen, because in a real system that is usually a deadlock, or
 someone waiting for an answer that will never come. Here it is simply true: we have given the
 box office nothing to do.
@@ -108,7 +108,7 @@ the checker stops at the first sale:
   ✗ spec error: Box office.sell: its run returned an object, which is ignored: a step changes its state in place (state.n += 1), it does not return a new one
 ```
 
-A **spec error** is Feynman telling you the model is wrong, as opposed to the system. A step
+A **spec error** is tsmodel telling you the model is wrong, as opposed to the system. A step
 that fails has no effects at all. Its changes and messages are thrown away, so a broken
 model never produces a misleading verdict.
 

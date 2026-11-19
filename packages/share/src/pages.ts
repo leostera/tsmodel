@@ -3,15 +3,15 @@ import type { Commit } from "./refs.ts";
 import type { Repository } from "./repository.ts";
 
 /**
- * The Feynman the builder installs (the Dockerfile's FEYNMAN_VERSION; a test keeps them equal).
- * A page depends on it as much as on the commit: a spec using what an older Feynman lacks
+ * The tsmodel the builder installs (the Dockerfile's TSMODEL_VERSION; a test keeps them equal).
+ * A page depends on it as much as on the commit: a spec using what an older tsmodel lacks
  * fails to build there, and a newer one checks and draws differently.
  */
-export const FEYNMAN_VERSION = "0.16.0";
+export const TSMODEL_VERSION = "0.17.0";
 
-/** `pages/0.16.0/github.com/leostera/feynman/<commit>.html`: a commit's page, built by one Feynman, never changes. */
+/** `pages/0.17.0/github.com/leostera/tsmodel/<commit>.html`: a commit's page, built by one tsmodel, never changes. */
 export function pageKey(repository: Repository, commit: Commit): string {
-  return `pages/${FEYNMAN_VERSION}/${repository.id}/${commit}.html`;
+  return `pages/${TSMODEL_VERSION}/${repository.id}/${commit}.html`;
 }
 
 export async function putPage(bucket: R2Bucket, repository: Repository, commit: Commit, page: ArrayBuffer): Promise<void> {
@@ -26,14 +26,14 @@ export async function putPage(bucket: R2Bucket, repository: Repository, commit: 
 /**
  * The last page built for a branch, a tag, or HEAD: what a visitor sees while the ref's newest
  * commit builds, or after its build failed. It names the page by key, so it can be one an older
- * Feynman built.
+ * tsmodel built.
  */
 export interface Latest {
   readonly key: string;
   readonly commit: Commit;
 }
 
-/** `latest/github.com/leostera/feynman/HEAD.json`. The ref is encoded: `a/b` with ref `c/d` is not `a/b/c` with ref `d`. */
+/** `latest/github.com/leostera/tsmodel/HEAD.json`. The ref is encoded: `a/b` with ref `c/d` is not `a/b/c` with ref `d`. */
 export function latestKey(repository: Repository, ref: string): string {
   return `latest/${repository.id}/${encodeURIComponent(ref)}.json`;
 }
@@ -44,7 +44,7 @@ export async function putLatest(bucket: R2Bucket, repository: Repository, ref: s
 
 /**
  * The last page built for `ref`, if it is still in R2. HEAD, which is what links to a repository
- * open, falls back to the newest page of the repository by any Feynman, for repositories whose
+ * open, falls back to the newest page of the repository by any tsmodel, for repositories whose
  * pages were built before refs were tracked; the answer is kept as HEAD's latest.
  */
 export async function getLatest(bucket: R2Bucket, repository: Repository, ref: string): Promise<{ object: R2ObjectBody; commit: Commit } | null> {
@@ -63,10 +63,10 @@ export async function getLatest(bucket: R2Bucket, repository: Repository, ref: s
   return { object, commit: newest.commit };
 }
 
-/** How many pages of a listing to read per Feynman version, looking for a repository's newest page. */
+/** How many pages of a listing to read per tsmodel version, looking for a repository's newest page. */
 const LIST_PAGES = 5;
 
-/** The page of `repository` stored most recently, by any Feynman. */
+/** The page of `repository` stored most recently, by any tsmodel. */
 async function newestPage(bucket: R2Bucket, repository: Repository): Promise<Latest | null> {
   const versions = await bucket.list({ prefix: "pages/", delimiter: "/" });
   let newest: { latest: Latest; uploaded: number } | null = null;
@@ -111,7 +111,7 @@ const SANDBOX_FAILURE_TTL_MS = 5 * 60 * 1_000;
 
 /** `failures/<version>/<host>/<path>/<target>.json`: the target as asked for, a commit or a prefix. */
 function failureKey(repository: Repository, target: string): string {
-  return `failures/${FEYNMAN_VERSION}/${repository.id}/${target}.json`;
+  return `failures/${TSMODEL_VERSION}/${repository.id}/${target}.json`;
 }
 
 export async function putFailure(bucket: R2Bucket, repository: Repository, target: string, failure: Failure): Promise<void> {
@@ -160,7 +160,7 @@ export function pageResponse(object: R2ObjectBody, commit: Commit, caching: Page
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set("etag", object.httpEtag);
-  headers.set("x-feynman-commit", commit);
+  headers.set("x-tsmodel-commit", commit);
   // The page runs the repository's specs, which is anyone's JavaScript. Sandboxed, it runs in
   // an origin of its own: it cannot read what this site stores, or ask this site for anything
   // as the visitor. Its links still open, in tabs that are not sandboxed.
@@ -179,7 +179,7 @@ export function buildingPage(repository: Repository, target: string, waiting: { 
   const short = /^[0-9a-f]{40}$/.test(target) ? target.slice(0, 12) : target;
   const building = waiting.state === "building";
   const detail = building
-    ? `Feynman is building the explorer of ${repository.id} at ${short}. It checks every spec, which takes a few minutes; this page reloads itself until it is ready.`
+    ? `tsmodel is building the explorer of ${repository.id} at ${short}. It checks every spec, which takes a few minutes; this page reloads itself until it is ready.`
     : `The explorer of ${repository.id} at ${short} builds after the one building now. This page reloads itself until it is ready.`;
   const response = errorPage(202, building ? "Building the explorer" : "Waiting to build the explorer", detail);
   response.headers.set("refresh", String(building ? BUILDING_REFRESH_S : waiting.refreshSeconds));
@@ -194,7 +194,7 @@ export function errorPage(status: number, title: string, detail = "", log = "", 
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escape(title)} · Feynman</title>
+<title>${escape(title)} · tsmodel</title>
 <style>
   body { font: 16px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 4rem auto; padding: 0 1.5rem; color: #1f2328; }
   pre { background: #f6f8fa; padding: 1rem; overflow: auto; font-size: 13px; border-radius: 6px; }
@@ -204,7 +204,7 @@ export function errorPage(status: number, title: string, detail = "", log = "", 
 <h1>${escape(title)}</h1>
 ${detail ? `<p>${escape(detail)}</p>` : ""}
 ${log ? `<pre>${escape(log)}</pre>` : ""}
-<p><a href="https://feynman.leostera.dev">Feynman</a> serves the explorer of any public repository at
+<p><a href="https://tsmodel.leostera.dev">tsmodel</a> serves the explorer of any public repository at
 <code>/s/&lt;host&gt;/&lt;path&gt;?ref=&lt;branch, tag or commit&gt;</code>.</p>
 </html>
 `;

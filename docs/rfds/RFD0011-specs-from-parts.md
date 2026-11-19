@@ -513,7 +513,7 @@ schema can't.
 
 - **XState** (v5) moved from one configuration object towards `setup({ types, actions })` and
   standalone machines, for typing without a single registry, and for reuse.
-- **Zod, Valibot, io-ts** infer types from runtime schemas. Feynman's vocabulary is a small
+- **Zod, Valibot, io-ts** infer types from runtime schemas. tsmodel's vocabulary is a small
   subset.
 - **P** declares events with payload types at the top level, and machines handle them with
   named states and `on eCharge do …`; a test assembles them.

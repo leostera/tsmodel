@@ -75,7 +75,7 @@ const chargedOnce = defineProperty("chargedOnce", {
 });
 ```
 
-A rule is on in the spec as written. `feynman check` checks the design as written, then again
+A rule is on in the spec as written. `tsmodel check` checks the design as written, then again
 without each rule, and expects every property that needs it to break.
 
 ## Step 1: claiming what each rule is for
@@ -114,7 +114,7 @@ knowing:
 and a restart before the failure arrives. With a budget of one, the checker can't reach it:
 
 ```sh
-feynman check specs/11-rules/1-rules.ts --set faults=2
+tsmodel check specs/11-rules/1-rules.ts --set faults=2
 ```
 
 ```text
@@ -214,7 +214,7 @@ wrong without it.
 how you answer "why is this here?":
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --without payOnlyTheHolder --only holdsAreRespected
+tsmodel check specs/11-rules/3-the-payer.ts --without payOnlyTheHolder --only holdsAreRespected
 ```
 
 ```text
@@ -239,7 +239,7 @@ feynman check specs/11-rules/3-the-payer.ts --without payOnlyTheHolder --only ho
 Chapter 7's bug, word for word. And without the idempotency key:
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --without idempotencyKey --brief
+tsmodel check specs/11-rules/3-the-payer.ts --without idempotencyKey --brief
 ```
 
 ```text
@@ -249,8 +249,8 @@ Box office without idempotencyKey: explored 15,961 states (…) in 329ms
   ✗ chargedOnce  No order is charged twice.
 ```
 
-The scenarios break too, because their descriptions promise one charge. `feynman run --without
-idempotencyKey` replays them without the rule, and `feynman dev` shows the playground of the
+The scenarios break too, because their descriptions promise one charge. `tsmodel run --without
+idempotencyKey` replays them without the rule, and `tsmodel dev` shows the playground of the
 design without it.
 
 Never copy a spec to turn a safeguard off. The copy drifts from the original, and nothing

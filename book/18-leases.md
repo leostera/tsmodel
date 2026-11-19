@@ -193,7 +193,7 @@ is yours for 30 seconds, then it's free again, whether you're done or not
 Step 1's story is back, with an expiry where the early release was. *A's write is on its way
 when its lease runs out. B takes the lock and writes, and A's write lands after.*
 
-Is that realistic? Thirty seconds is a long time for a write. But Feynman has no clock
+Is that realistic? Thirty seconds is a long time for a write. But tsmodel has no clock
 (chapter 7): the expiry can fire at any moment, because in the real system nothing bounds how
 long A takes. A garbage-collection pause, a swapped-out process, a network retry, a VM
 migration: each has stopped real processes for longer than any lease.
@@ -225,7 +225,7 @@ The natural fix: before writing, ask whether the lease is still yours
 ```
 
 ```sh
-feynman check specs/18-leases/4-check-first.ts --only noStaleWrites
+tsmodel check specs/18-leases/4-check-first.ts --only noStaleWrites
 ```
 
 ```text
@@ -287,7 +287,7 @@ const fencing = defineRule("fencing", { description: "Storage refuses a write wh
 ```
 
 ```sh
-feynman check specs/18-leases/5-fencing.ts
+tsmodel check specs/18-leases/5-fencing.ts
 ```
 
 ```text

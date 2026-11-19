@@ -1,7 +1,7 @@
 // Chapter 7, step 1: holding the seat, then paying.
 //
 // Expected: both properties hold. A hold never ends unless its holder pays.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 // The last seat: one seat, and what the box office knows about it.
 type Seat = { kind: "free" } | { kind: "held"; by: string } | { kind: "sold"; to: string };

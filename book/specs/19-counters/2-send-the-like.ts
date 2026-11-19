@@ -2,7 +2,7 @@
 //
 // Expected: with no faults every property holds; with one, `everyLikeCounts` breaks (a like
 // is lost) and `neverOvercounts` breaks (a like arrives twice).
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, duplicate, lose, type Setup, type WorldView } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

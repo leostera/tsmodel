@@ -2,7 +2,7 @@
 //
 // Expected: four states (nothing sold, A1, A2, both), and stuck once sold out. Selling a
 // seat that is sold already changes nothing, and the checker tries it anyway.
-import { defineActor, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { defineActor, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

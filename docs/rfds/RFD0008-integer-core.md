@@ -55,8 +55,8 @@ Explicit-state checkers that go fast intern their states and keep fingerprints, 
 
 ## Guide-level explanation
 
-Nothing changes in how specs are written, or in what `feynman check` reports. Searches are
-faster. `engine: "classic"` in `check()`, or `FEYNMAN_ENGINE=classic`, runs the classic
+Nothing changes in how specs are written, or in what `tsmodel check` reports. Searches are
+faster. `engine: "classic"` in `check()`, or `TSMODEL_ENGINE=classic`, runs the classic
 search until it is deleted.
 
 ## Reference-level explanation

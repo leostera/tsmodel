@@ -1,7 +1,7 @@
 // Chapter 4, step 2: the box office answers only when it sells.
 //
 // Expected: stuck in 4 events: the person buys A1, then asks for A1 again and hears nothing.
-import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

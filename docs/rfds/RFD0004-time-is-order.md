@@ -37,7 +37,7 @@ Specs model timing in two ways today, and neither pays for itself.
    the simulator waits ten real seconds for a heartbeat; heartbeats exist in specs only to
    keep a lease alive. Axo's spec just removed its heartbeats for this reason.
 4. **The oracles already agree with this.** The TLA+ models of payments and the job queue
-   say a timer "may fire whenever it is set". Feynman reaches their verdicts and
+   say a timer "may fire whenever it is set". tsmodel reaches their verdicts and
    counterexample lengths today; without time it should reach their exact state counts too.
 
 ## Goals
@@ -94,7 +94,7 @@ When the code's correctness does rest on time (a lease that a single clock enfor
 deadline counted in ticks), the spec says so in its own state, as a TLA+ or P model would:
 a `Clock` actor whose `tick` action advances a counter, steps that compare against it, and
 a bound on ticks in the checker's repeats. Time is then part of the model, visible in the
-state, and the checker explores it like anything else. Nothing in Feynman is special about it.
+state, and the checker explores it like anything else. Nothing in tsmodel is special about it.
 
 ### Scenarios and "left alone"
 
@@ -154,7 +154,7 @@ instance are the same faults as today, within the same budget.
 
 ### Compatibility and migration
 
-None. Feynman is at 0.x, so this is a clean break: `SEC`, `MIN`, `ctx.now`, durations in
+None. tsmodel is at 0.x, so this is a clean break: `SEC`, `MIN`, `ctx.now`, durations in
 `ctx.start`, `latency`, `expires`, `within`, `wait` and `settle(horizon)` are removed, and
 specs that use them stop type-checking.
 
@@ -189,7 +189,7 @@ copies, for their owners to take.
 ### Proposed design
 
 Untimed, with timers as events that may fire at any moment, is the standard model in TLA+,
-P and most protocol checkers, and it matches how Feynman's oracles already model these
+P and most protocol checkers, and it matches how tsmodel's oracles already model these
 systems. It removes the only part of the engine and checker that is about numbers rather
 than structure.
 
@@ -213,7 +213,7 @@ Keep paying for time in states, code and reading, for orderings the checker shou
 
 - TLA+ specifications model timeouts as actions enabled while a timer is set.
 - P models timers as machines that may send a timeout event at any point.
-- Feynman's own oracles (`examples/oracles/Payments.tla`, `JobQueue.tla`).
+- tsmodel's own oracles (`examples/oracles/Payments.tla`, `JobQueue.tla`).
 
 ## Unresolved questions
 

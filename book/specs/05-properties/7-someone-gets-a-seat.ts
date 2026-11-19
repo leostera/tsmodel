@@ -1,7 +1,7 @@
 // Chapter 5, step 7: the fix of step 4, and the property that caught step 5.
 //
 // Expected: every property holds, and someoneGetsASeat is reached.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

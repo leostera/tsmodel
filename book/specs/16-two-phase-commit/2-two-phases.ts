@@ -2,7 +2,7 @@
 // decides only when it has every vote.
 //
 // Expected: `atomic` and `nobodyWaitsForever` hold, on a perfect network.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@tsmodel/tsmodel";
 
 type Outcome = "committed" | "aborted";
 

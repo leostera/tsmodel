@@ -4,7 +4,7 @@
 // events with one fault: the box office restarts while the seat is held, the restart takes
 // the expiry timer with it, and the holder never pays. `paymentsEnd` holds; with a depth
 // bound of 14, it is unfinished.
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, crash, defineZone, duplicate, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

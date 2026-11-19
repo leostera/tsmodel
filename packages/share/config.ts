@@ -6,7 +6,7 @@
 //   },
 //   containers: [shareContainer],
 //
-// and its main module exports ShareBuilder and ShareOutbound from @feynman/share.
+// and its main module exports ShareBuilder and ShareOutbound from @tsmodel/share.
 import { bindings, defineContainer, exports } from "cf/config";
 
 // cf evaluates this file in Node. The host's Worker types, which load it to infer env, have no
@@ -17,9 +17,9 @@ declare global {
   }
 }
 
-/** The sandbox each build runs in: Bun, git and the published Feynman (Dockerfile). */
+/** The sandbox each build runs in: Bun, git and the published tsmodel (Dockerfile). */
 export const shareContainer = defineContainer({
-  name: "feynman-share-builder",
+  name: "tsmodel-share-builder",
   schedulingPolicy: "durable-object",
   images: { builder: { dockerfile: decodeURIComponent(new URL("./Dockerfile", import.meta.url).pathname) } },
 });
@@ -37,7 +37,7 @@ export const shareExports = {
  */
 export function shareBindings() {
   return {
-    SHARE_PAGES: bindings.r2({ name: "feynman-share" }),
+    SHARE_PAGES: bindings.r2({ name: "tsmodel-share" }),
     // Rate limit namespaces are account-wide: these ids must not be used by another Worker.
     SHARE_REQUESTS: bindings.rateLimit({ namespace: "7101", simple: { limit: 60, period: 60 } }),
     SHARE_BUILDS: bindings.rateLimit({ namespace: "7102", simple: { limit: 2, period: 60 } }),

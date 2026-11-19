@@ -22,7 +22,7 @@ is as before: messages in flight are a bag, and any may arrive next (RFD0004).
 
 ## Motivation
 
-Feynman reorders everything. That is right for separate requests, and wrong for one TCP
+tsmodel reorders everything. That is right for separate requests, and wrong for one TCP
 connection, one WebSocket, or a queue with one partition and one consumer. A spec of a
 system that relies on that order can't say so, and gets counterexamples that can't happen:
 the alternating bit protocol, correct on the FIFO links it was designed for, "breaks" in
@@ -30,7 +30,7 @@ six events; a client whose writes go over one socket sees its first write win.
 
 Authors work around it with sequence numbers the code does not have, or by reading the
 messages ahead of one in a `when`, which the step cannot see. Both model a different system.
-P orders messages between two machines, and TLA+ specs keep a sequence per channel. Feynman
+P orders messages between two machines, and TLA+ specs keep a sequence per channel. tsmodel
 should be able to say what they say.
 
 ## Goals

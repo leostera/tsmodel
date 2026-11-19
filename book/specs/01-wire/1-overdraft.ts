@@ -4,7 +4,7 @@
 //
 // Expected: with one worker (the default) both properties hold. With two
 // (`--instances Wire=2`), `noOverdrafts` breaks in 8 events, with no faults.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const ACCOUNTS = ["alice", "bob"] as const;
 type Account = (typeof ACCOUNTS)[number];

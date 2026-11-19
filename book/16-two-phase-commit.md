@@ -299,7 +299,7 @@ sends. (The first version of this step broadcast to everyone, the asker included
 found the asker waiting forever on a lost "reply" that wasn't one.)
 
 ```sh
-feynman check specs/16-two-phase-commit/6-ask.ts
+tsmodel check specs/16-two-phase-commit/6-ask.ts
 ```
 
 ```text
@@ -383,7 +383,7 @@ Checkout: explored 10,468 states (…, faults=2) in 230ms
 And without the rule:
 
 ```sh
-feynman check specs/16-two-phase-commit/7-a-restart.ts --without logDecision --only atomic
+tsmodel check specs/16-two-phase-commit/7-a-restart.ts --without logDecision --only atomic
 ```
 
 ```text

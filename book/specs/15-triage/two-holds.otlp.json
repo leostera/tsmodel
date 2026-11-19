@@ -16,7 +16,7 @@
       }
      },
      {
-      "key": "feynman.actor",
+      "key": "tsmodel.actor",
       "value": {
        "stringValue": "Person"
       }
@@ -39,7 +39,7 @@
        "endTimeUnixNano": "1795284000003000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "hold"
          }
@@ -65,7 +65,7 @@
        "endTimeUnixNano": "1795284000023000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "held"
          }
@@ -101,7 +101,7 @@
       }
      },
      {
-      "key": "feynman.actor",
+      "key": "tsmodel.actor",
       "value": {
        "stringValue": "Person"
       }
@@ -124,7 +124,7 @@
        "endTimeUnixNano": "1795284000005000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "hold"
          }
@@ -150,7 +150,7 @@
        "endTimeUnixNano": "1795284000024000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "unavailable"
          }
@@ -198,7 +198,7 @@
        "endTimeUnixNano": "1795283999973000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "hold"
          }
@@ -224,7 +224,7 @@
        "endTimeUnixNano": "1795283999975000000",
        "attributes": [
         {
-         "key": "feynman.step",
+         "key": "tsmodel.step",
          "value": {
           "stringValue": "hold"
          }

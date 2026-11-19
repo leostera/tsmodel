@@ -2,7 +2,7 @@
 //
 // Expected: `noStaleWrites` breaks in 11 events with no faults: the release overtakes the
 // write. `lockIsFreed` breaks with one fault: a worker restarts holding the lock.
-import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

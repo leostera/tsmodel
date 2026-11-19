@@ -5,7 +5,7 @@
 // interchangeable, and `symmetric: true` is a false claim.
 //
 // Expected: the checker refutes the claim; `firstEntrantWins` breaks in 5 events.
-import { atMost, defineActor, defineMessage, defineProperty, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const Enter = defineMessage("Enter", {}, { over: "https" });
 const Won = defineMessage("Won", {}, { tone: "reply" });

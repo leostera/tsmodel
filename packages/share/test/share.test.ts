@@ -13,9 +13,9 @@ function pkt(line: string): string {
 
 describe("parseRepository", () => {
   test("a host and a path", () => {
-    expect(parseRepository("github.com/leostera/feynman")).toEqual({
+    expect(parseRepository("github.com/leostera/tsmodel")).toEqual({
       ok: true,
-      repository: { host: "github.com", path: "leostera/feynman", url: "https://github.com/leostera/feynman", id: "github.com/leostera/feynman" },
+      repository: { host: "github.com", path: "leostera/tsmodel", url: "https://github.com/leostera/tsmodel", id: "github.com/leostera/tsmodel" },
     });
   });
 
@@ -106,14 +106,14 @@ describe("resolveRef", () => {
   test("a name that is nothing", () => expect(resolveRef(refs, "nope")).toEqual({ kind: "missing" }));
 });
 
-describe("FEYNMAN_VERSION", () => {
-  test("is the Feynman the Dockerfile installs: pages are cached by it", async () => {
-    const { FEYNMAN_VERSION, pageKey } = await import("../src/pages.ts");
+describe("TSMODEL_VERSION", () => {
+  test("is the tsmodel the Dockerfile installs: pages are cached by it", async () => {
+    const { TSMODEL_VERSION, pageKey } = await import("../src/pages.ts");
     const dockerfile = await Bun.file(new URL("../Dockerfile", import.meta.url)).text();
-    expect(/^ARG FEYNMAN_VERSION=(.+)$/m.exec(dockerfile)?.[1]).toBe(FEYNMAN_VERSION);
-    const parsed = parseRepository("github.com/leostera/feynman");
+    expect(/^ARG TSMODEL_VERSION=(.+)$/m.exec(dockerfile)?.[1]).toBe(TSMODEL_VERSION);
+    const parsed = parseRepository("github.com/leostera/tsmodel");
     if (!parsed.ok) throw new Error(parsed.reason);
-    expect(pageKey(parsed.repository, "a".repeat(40) as Commit)).toBe(`pages/${FEYNMAN_VERSION}/github.com/leostera/feynman/${"a".repeat(40)}.html`);
+    expect(pageKey(parsed.repository, "a".repeat(40) as Commit)).toBe(`pages/${TSMODEL_VERSION}/github.com/leostera/tsmodel/${"a".repeat(40)}.html`);
   });
 });
 

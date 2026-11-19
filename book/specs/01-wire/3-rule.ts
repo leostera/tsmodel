@@ -2,7 +2,7 @@
 //
 // Expected: both properties hold, and `atomicDebit` is needed: without it, `noOverdrafts`
 // breaks in 8 events with no faults, from the setup of "Two at once".
-import { atMost, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineRule, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const ACCOUNTS = ["alice", "bob"] as const;
 type Account = (typeof ACCOUNTS)[number];

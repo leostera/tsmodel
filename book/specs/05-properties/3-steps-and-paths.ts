@@ -3,7 +3,7 @@
 // Expected, from the end of "Both want A1": `soldSeatsStaySold` breaks in 10 events,
 // `ticketsMatchTheBooks` in 12, `oneOwnerPerSeat` in 14 and `noMoreTicketsThanSeats` in 12
 // (the scenario's ticket for A1, then two for A2), none with a fault.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

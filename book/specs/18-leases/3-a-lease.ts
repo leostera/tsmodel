@@ -3,7 +3,7 @@
 // Expected: `lockIsFreed` holds; `noStaleWrites` breaks with no faults: A's
 // lease runs out while its write is on the way, B takes the lock and writes, and A's write
 // lands after.
-import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@leostera/feynman";
+import { atMost, budget, crash, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

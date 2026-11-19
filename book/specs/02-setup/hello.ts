@@ -1,5 +1,5 @@
 // Chapter 2: a first check. Expected: `neverOn` breaks in 1 event.
-import { defineActor, defineProperty, defineSpec, defineZone } from "@leostera/feynman";
+import { defineActor, defineProperty, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 const room = defineZone({ name: "Room" });
 

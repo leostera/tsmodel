@@ -1,7 +1,7 @@
 // Chapter 4, step 1: a message nobody handles.
 //
 // Expected: defineSpec refuses it: Ticket is sent, and no actor has a step on it.
-import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { serve, type ShareRequest } from "../src/app.ts";
 import type { BuildJob, StartResult } from "../src/builder.ts";
 import type { ShareEnv } from "../src/env.ts";
-import { FEYNMAN_VERSION, latestKey, pageKey } from "../src/pages.ts";
+import { TSMODEL_VERSION, latestKey, pageKey } from "../src/pages.ts";
 import type { Commit } from "../src/refs.ts";
 import { parseRepository, type Repository } from "../src/repository.ts";
 
@@ -105,7 +105,7 @@ describe("a built page", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("<p>new</p>");
     expect(response.headers.get("cache-control")).toBe("public, max-age=60");
-    expect(response.headers.get("x-feynman-commit")).toBe(NEW);
+    expect(response.headers.get("x-tsmodel-commit")).toBe(NEW);
     expect(starts).toEqual([]);
   });
 
@@ -124,13 +124,13 @@ describe("HEAD's newest commit is not built", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("<p>old</p>");
     expect(response.headers.get("cache-control")).toBe("no-cache");
-    expect(response.headers.get("x-feynman-commit")).toBe(OLD);
+    expect(response.headers.get("x-tsmodel-commit")).toBe(OLD);
     expect(starts).toEqual([
       { name: `github.com/leostera/axo@${NEW}`, job: { repository: AXO, cloneUrl: AXO.url, target: NEW, ref: "HEAD" }, client: "203.0.113.7" },
     ]);
   });
 
-  test("with nothing recorded for HEAD, the newest page by any Feynman stands in, and is recorded", async () => {
+  test("with nothing recorded for HEAD, the newest page by any tsmodel stands in, and is recorded", async () => {
     bucket.add(`pages/0.14.0/github.com/leostera/axo/${OTHER}.html`, "<p>older</p>", new Date("2026-10-01"));
     bucket.add(`pages/0.15.0/github.com/leostera/axo/${OLD}.html`, "<p>old</p>", new Date("2026-11-11"));
     // A nested repository's page is under the same prefix, and is not this repository's.
@@ -183,7 +183,7 @@ describe("a commit asked for by its id", () => {
 });
 
 describe("a recent failure", () => {
-  const failure = (status: number, at: number) => bucket.add(`failures/${FEYNMAN_VERSION}/github.com/leostera/axo/${NEW}.json`, JSON.stringify({ status, message: "feynman build failed", log: "the log" }), new Date(at), { failedAt: String(at) });
+  const failure = (status: number, at: number) => bucket.add(`failures/${TSMODEL_VERSION}/github.com/leostera/axo/${NEW}.json`, JSON.stringify({ status, message: "tsmodel build failed", log: "the log" }), new Date(at), { failedAt: String(at) });
 
   test("shows HEAD's previous page, and does not build again", async () => {
     failure(422, Date.now());

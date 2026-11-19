@@ -1,14 +1,14 @@
 # RFD0001 - Extracted behavioural model
 
 - Feature Name: `extracted-behavioural-model`
-- Status: Superseded by [RFD0002](RFD0002-feynman-specs.md)
+- Status: Superseded by [RFD0002](RFD0002-tsmodel-specs.md)
 - Author: `leostera`
 - Start Date: `2026-10-25`
 - Updated: `2026-10-25`
 - Discussion PR: `TBD`
 - Tracking Issue: `TBD`
 
-This is a snapshot RFD. It records the first iteration of Feynman as implemented at
+This is a snapshot RFD. It records the first iteration of tsmodel as implemented at
 `e48fd61`, so that the decisions and lessons survive its replacement. It proposes
 nothing.
 
@@ -16,7 +16,7 @@ nothing.
 
 An agent extracts a behavioural model of a whole repository: journeys, actors,
 components, flows, protocols, state, invariants, claims, and limits. The model is stored
-as one JSON file per element under `.feynman/model/`, and each element is anchored to
+as one JSON file per element under `.tsmodel/model/`, and each element is anchored to
 the code it comes from. A Pi extension drives the extraction through three phases and
 checks coverage, so that every file is read or set aside. A deterministic renderer turns
 the model into a self-contained HTML explainer.
@@ -30,7 +30,7 @@ than the JSON.
 
 ## Guide-level explanation
 
-In Pi, `/feynman-explain` (or `/feynman-extract` without rendering) starts an extraction
+In Pi, `/tsmodel-explain` (or `/tsmodel-extract` without rendering) starts an extraction
 at HEAD, including uncommitted work. It takes an optional path to a repository.
 
 1. **Phase 1, actors.** A shallow survey of the repository, producing the actor map and
@@ -41,10 +41,10 @@ at HEAD, including uncommitted work. It takes an optional path to a repository.
 2. **Phase 2, flows.** For each group of connected actors, the agent reads the listed
    files in full, tests included, and writes the flows that run through them. Each flow
    step is anchored to `path#symbol`.
-3. **Phase 3, depth.** Feynman lists gaps: unanchored steps, unexplained connections,
+3. **Phase 3, depth.** tsmodel lists gaps: unanchored steps, unexplained connections,
    and anchors that call-tree measurement cannot find. The agent fixes only those.
 
-When the agent stops, Feynman checks coverage and validity, and says what comes next.
+When the agent stops, tsmodel checks coverage and validity, and says what comes next.
 At the end, it measures the components, computes a call tree under each anchored step
 with CallDiff, records each element's sources, and renders the explainer.
 
@@ -58,12 +58,12 @@ actors, components, flows, protocols, state, invariants, claims, and limits.
 
 | Package | Role |
 |---|---|
-| `@feynman/model` | Schemas (one per kind), types, checks, coverage ledgers, snapshots, anchors, measurement, call trees through a Node worker running CallDiff. The `feynman-model` CLI. |
-| `@feynman/modeler` | The runtime-agnostic extraction driver: phases, gaps, messages, read evidence. |
-| `@feynman/pi-feynman` | A thin Pi adapter: the `feynman_extract`, `feynman_status`, and `feynman_skip` tools, and the `/feynman-extract` and `/feynman-explain` commands. |
-| `@feynman/renderer` | React and Kumo views, built into one HTML file. |
+| `@tsmodel/model` | Schemas (one per kind), types, checks, coverage ledgers, snapshots, anchors, measurement, call trees through a Node worker running CallDiff. The `tsmodel-model` CLI. |
+| `@tsmodel/modeler` | The runtime-agnostic extraction driver: phases, gaps, messages, read evidence. |
+| `@tsmodel/pi-tsmodel` | A thin Pi adapter: the `tsmodel_extract`, `tsmodel_status`, and `tsmodel_skip` tools, and the `/tsmodel-extract` and `/tsmodel-explain` commands. |
+| `@tsmodel/renderer` | React and Kumo views, built into one HTML file. |
 
-**Storage.** Each file under `.feynman/model/` is named by the element's kebab-case id:
+**Storage.** Each file under `.tsmodel/model/` is named by the element's kebab-case id:
 
 ```
 journeys/  actors/  components/  flows/  protocols/
@@ -72,7 +72,7 @@ coverage/<batch>.json   meta.json
 ```
 
 - `coverage/` is written by the extension, never by the agent.
-- `.feynman/config.json` holds `exclude` pathspecs.
+- `.tsmodel/config.json` holds `exclude` pathspecs.
 - Each element records `sources` as git blob ids, so that an update knows which
   elements to re-examine.
 
@@ -107,4 +107,4 @@ whose sources changed.
 - **Reading is not understanding.** Agents asked for an interactive explainer of one
   topic produced simulators. People found those far easier to understand, and they
   surfaced behaviour the model never captured. That led to
-  [RFD0002](RFD0002-feynman-specs.md).
+  [RFD0002](RFD0002-tsmodel-specs.md).

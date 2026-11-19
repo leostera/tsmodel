@@ -1,17 +1,17 @@
 {
-  "name": "feynman",
+  "name": "tsmodel",
   "private": true,
   "type": "module",
   "workspaces": ["packages/*", "sites/*"],
   "scripts": {
-    "feynman": "bun packages/feynman/bin/feynman.ts",
-    "build": "bun run --cwd packages/feynman build",
-    "test": "bun run --cwd packages/feynman test && bun run --cwd packages/share test",
-    "oracles": "bun run --cwd packages/feynman oracles",
-    "bench": "bun run --cwd packages/feynman bench",
-    "fuzz": "bun run --cwd packages/feynman fuzz",
-    "typecheck": "bun run --cwd packages/feynman typecheck",
-    "site:deploy": "bun run --cwd sites/feynman.leostera.dev deploy"
+    "tsmodel": "bun packages/tsmodel/bin/tsmodel.ts",
+    "build": "bun run --cwd packages/tsmodel build",
+    "test": "bun run --cwd packages/tsmodel test && bun run --cwd packages/share test",
+    "oracles": "bun run --cwd packages/tsmodel oracles",
+    "bench": "bun run --cwd packages/tsmodel bench",
+    "fuzz": "bun run --cwd packages/tsmodel fuzz",
+    "typecheck": "bun run --cwd packages/tsmodel typecheck",
+    "site:deploy": "bun run --cwd sites/tsmodel.leostera.dev deploy"
   },
-  "devDependencies": { "@leostera/feynman": "workspace:*" }
+  "devDependencies": { "@tsmodel/tsmodel": "workspace:*" }
 }

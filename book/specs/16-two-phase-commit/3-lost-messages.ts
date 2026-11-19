@@ -2,7 +2,7 @@
 //
 // Expected: `atomic` holds; `nobodyWaitsForever` breaks with one fault: a vote or a decision is
 // lost, and a service that voted yes waits forever.
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose, type Setup } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. */
 const faults = budget("faults", 1);

@@ -3,7 +3,7 @@
 //
 // Expected: `neverOvercounts` holds; `everyLikeCounts` breaks with no faults: both replicas
 // count a like at once, and each keeps 1 where there were 2.
-import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup, type WorldView } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, type Setup, type WorldView } from "@tsmodel/tsmodel";
 
 const Count = defineMessage("Count", { value: Number }, { name: "count" });
 

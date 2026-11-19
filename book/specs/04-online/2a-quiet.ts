@@ -2,7 +2,7 @@
 // calls every quiet world finished.
 //
 // Expected: nothing reported. A person waiting forever is "quiet", so it counts as finished.
-import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@leostera/feynman";
+import { atMost, defineActor, defineMessage, defineSpec, defineZone, oneOf } from "@tsmodel/tsmodel";
 
 const SEATS = ["A1", "A2"] as const;
 type Seat = (typeof SEATS)[number];

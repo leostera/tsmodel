@@ -2,7 +2,7 @@
 
 > *What did the checker actually look at?*
 
-A `✓` from Feynman means a property held in every world the checker reached, and that it
+A `✓` from tsmodel means a property held in every world the checker reached, and that it
 reached every world within its bounds. Both halves matter. This chapter is about the bounds:
 what they are, how to read what the checker says about them, and what to do when a spec gets
 too big to check.
@@ -54,8 +54,8 @@ The final box office ([`specs/11-rules/3-the-payer.ts`](specs/11-rules/3-the-pay
 with one person from the start, and the people its scenarios bring: two at most. Three?
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --instances Person=2
-feynman check specs/11-rules/3-the-payer.ts --instances Person=3 --max-states 500000
+tsmodel check specs/11-rules/3-the-payer.ts --instances Person=2
+tsmodel check specs/11-rules/3-the-payer.ts --instances Person=3 --max-states 500000
 ```
 
 ```text
@@ -74,7 +74,7 @@ The search goes as deep as it takes, by default. A depth bound makes it smaller,
 proof:
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --depth 40 --instances Person=3 --max-states 500000
+tsmodel check specs/11-rules/3-the-payer.ts --depth 40 --instances Person=3 --max-states 500000
 ```
 
 ```text
@@ -98,8 +98,8 @@ It applies only to safety, since liveness turns symmetry off. So compare the saf
 alone:
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --instances Person=3 --only chargedOnce,oneTicket,holdsAreRespected --max-states 500000
-feynman check specs/11-rules/3-the-payer.ts --instances Person=3 --only chargedOnce,oneTicket,holdsAreRespected --max-states 500000 --no-symmetry
+tsmodel check specs/11-rules/3-the-payer.ts --instances Person=3 --only chargedOnce,oneTicket,holdsAreRespected --max-states 500000
+tsmodel check specs/11-rules/3-the-payer.ts --instances Person=3 --only chargedOnce,oneTicket,holdsAreRespected --max-states 500000 --no-symmetry
 ```
 
 ```text
@@ -150,7 +150,7 @@ const firstEntrantWins = defineProperty("firstEntrantWins", {
 With the random runs turned off, the search alone gets this wrong:
 
 ```sh
-feynman check specs/12-bounds/1-false-symmetry.ts --instances Person=2 --walks 0
+tsmodel check specs/12-bounds/1-false-symmetry.ts --instances Person=2 --walks 0
 ```
 
 ```text
@@ -199,11 +199,11 @@ const crowdsHearBack = defineProperty("crowdsHearBack", {
 ```
 
 No world the checker reached had three people, so `whenever` never held, and the property
-tested nothing. A tool that rounded up would print `✓` here. Feynman says `?`, and how to fix
+tested nothing. A tool that rounded up would print `✓` here. tsmodel says `?`, and how to fix
 it: bring three people in, with a scenario's setup or `--instances`:
 
 ```sh
-feynman check specs/12-bounds/2-untested.ts --instances Person=3 --only crowdsHearBack --max-states 500000
+tsmodel check specs/12-bounds/2-untested.ts --instances Person=3 --only crowdsHearBack --max-states 500000
 ```
 
 ```text
@@ -220,7 +220,7 @@ hold.
 Set the state limit low, to see what the checker says when it runs out:
 
 ```sh
-feynman check specs/11-rules/3-the-payer.ts --max-states 2000
+tsmodel check specs/11-rules/3-the-payer.ts --max-states 2000
 ```
 
 ```text
@@ -260,7 +260,7 @@ too much. In rough order of payoff:
 
 And put the bounds that matter in the spec, where a reader sees them: a budget of two because
 the resume rule needs two faults, a scenario with three people because crowds matter, a
-`check: { maxStates: 500_000 }` in `feynman.config.ts` because three people need it.
+`check: { maxStates: 500_000 }` in `tsmodel.config.ts` because three people need it.
 
 ## Exercises
 

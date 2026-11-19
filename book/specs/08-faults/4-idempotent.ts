@@ -1,7 +1,7 @@
 // Chapter 8, step 4: the bank charges each order once: the order is an idempotency key.
 //
 // Expected: both properties hold, with one fault and with two (`--set faults=2`).
-import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, failed, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineCall, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, failed, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

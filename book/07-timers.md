@@ -4,7 +4,7 @@
 
 Every real system waits for something: a reply, a payment, a person. And every real system
 stops waiting at some point: a timeout, an expiry, a lease that runs out. This chapter is about
-**timers**, and about the most important idea in how Feynman treats time: there is no clock.
+**timers**, and about the most important idea in how tsmodel treats time: there is no clock.
 
 ## Holds
 
@@ -267,7 +267,7 @@ payment arriving.
 
 ## There is no clock
 
-This is the most important idea in this chapter. Feynman specs have no time. There is no
+This is the most important idea in this chapter. tsmodel specs have no time. There is no
 `ctx.now`, no latency, and no duration. A run is an order of events, and a timer that is set
 may fire before or after anything else that is pending.
 

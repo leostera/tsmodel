@@ -1,7 +1,7 @@
 // Chapter 7, step 3: a payment counts only for the hold it pays for.
 //
 // Expected: both properties hold, with the hold's expiry racing every payment.
-import { atMost, defineActor, defineLimit, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@leostera/feynman";
+import { atMost, defineActor, defineLimit, defineMessage, defineProperty, defineScenario, defineSpec, defineZone } from "@tsmodel/tsmodel";
 
 // The last seat: one seat, and what the box office knows about it.
 type Seat = { kind: "free" } | { kind: "held"; by: string } | { kind: "sold"; to: string };

@@ -2,7 +2,7 @@
 //
 // Expected: both properties hold, and the system gets stuck in 6 events with one fault: a
 // charge (or its answer) is lost, and the box office waits for it forever.
-import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose } from "@leostera/feynman";
+import { atMost, budget, defineActor, defineMessage, defineProperty, defineScenario, defineSpec, defineZone, lose } from "@tsmodel/tsmodel";
 
 /** At most one fault on any path. `--set faults=2` raises it. */
 const faults = budget("faults", 1);

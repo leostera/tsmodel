@@ -1,0 +1,15 @@
+$ bunx tsmodel check retried-call
+Retried call (fixed): explored 10 states (1 of each actor, and from the end of 2 scenario(s), faults=1) in 5ms
+  ✓ chargedOnce  The customer is never charged twice.
+  ✓ paymentsEnd  A payment in progress ends paid.
+  rules
+    ✓ idempotencyKey  needed: without it, chargedOnce breaks (5 events)
+
+$ bunx tsmodel check retried-call --without idempotencyKey
+  ✗ chargedOnce  The customer is never charged twice.
+    shortest counterexample, 5 event(s), needs 1 fault(s):
+       1  Client (Client)  pay
+       2  Bank (Bank)  charge  {"payment":"pay-1"}  from Client
+       3  Client (Client)  charged → chargedLost  {"payment":"pay-1"}  from Bank
+       4  Client (Client)  charge failed  {"payload":{"payment":"pay-1"},"to":{"id":"bank"}}  from Bank
+       5  Bank (Bank)  charge  {"payment":"pay-1"}  from Client
